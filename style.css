@@ -13,7 +13,7 @@ body {
   align-items: center;
   justify-content: center;
   padding: 1rem;
-  background-color: #ffffff;
+  background-color: #fff;
   border-bottom: 1px solid #ccc;
 }
 
@@ -64,7 +64,7 @@ button {
 }
 
 .btn-primary {
-  background-color: #3B82F6; /* Blue */
+  background-color: #3B82F6;
   color: #fff;
 }
 .btn-primary:hover {
@@ -72,7 +72,7 @@ button {
 }
 
 .btn-secondary {
-  background-color: #6366F1; /* Indigo */
+  background-color: #6366F1;
   color: #fff;
 }
 .btn-secondary:hover {
@@ -88,7 +88,7 @@ button {
 }
 
 .btn-success {
-  background-color: #4CAF50; /* Green */
+  background-color: #4CAF50;
   color: #fff;
 }
 .btn-success:hover {
@@ -111,7 +111,8 @@ button {
   margin-right: 0.5rem;
 }
 
-.strikethrough {
+.strikethrough span,
+.strikethrough input[type="checkbox"]:checked + span {
   text-decoration: line-through;
   color: #888;
 }
@@ -121,7 +122,6 @@ button {
   align-items: center;
   margin-bottom: 0.5rem;
 }
-
 .routine-item span {
   font-weight: 600;
 }
@@ -137,7 +137,6 @@ button {
   margin-bottom: 1rem;
 }
 
-/* Quote of day */
 .quote-of-day {
   font-style: italic;
   margin: 1rem 0 0.5rem 0;
@@ -145,7 +144,6 @@ button {
   text-align: center;
 }
 
-/* Calendar history styling */
 .calendar-history-item {
   border: 1px solid #ccc;
   margin-bottom: 1rem;
@@ -158,12 +156,10 @@ button {
   font-weight: 600;
 }
 
-/* Responsive text */
 h2, h3, h4, p {
   margin: 0.5rem 0;
 }
 
-/* Mobile optimization */
 @media (max-width: 600px) {
   .container {
     padding: 0.5rem;
