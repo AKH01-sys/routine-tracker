@@ -38,7 +38,7 @@
 
   <script src="app.js"></script>
   <script>
-    // Show current date
+    // Show date
     const dateEl = document.getElementById("current-date");
     dateEl.textContent = new Date().toDateString();
 
@@ -66,7 +66,6 @@
         const success = takeDayOff();
         if (success) {
           alert("Enjoy your day off!");
-          // Optionally, disable Load Routine button on Home Page if necessary
         }
       } else {
         alert("You have reached your day off limit or already took a day off today.");
