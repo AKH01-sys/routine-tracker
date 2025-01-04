@@ -23,12 +23,20 @@ const SETTINGS_KEY = "settings";
 const COMPLETIONS_KEY = "completions";
 const DAILY_QUOTES_KEY = "dailyQuotes";
 
-/** Initialize the app data */
+/**
+ * Initialize the app data:
+ * - Ensure default data structures exist.
+ * - Purge old day-off records from previous months.
+ * - Initialize daily quotes if not already set.
+ */
 function initAppData() {
-  let routines = getData(ROUTINES_KEY, []);
-  let settings = getData(SETTINGS_KEY, { dayOffLimit: 3, dayOffRecords: [] });
-  let completions = getData(COMPLETIONS_KEY, {});
-  let dailyQuotes = getData(DAILY_QUOTES_KEY, DAILY_QUOTES);
+  const routines = getData(ROUTINES_KEY, []);
+  const settings = getData(SETTINGS_KEY, {
+    dayOffLimit: 3,
+    dayOffRecords: []
+  });
+  const completions = getData(COMPLETIONS_KEY, {});
+  const dailyQuotes = getData(DAILY_QUOTES_KEY, DAILY_QUOTES);
 
   setData(ROUTINES_KEY, routines);
   setData(SETTINGS_KEY, settings);
@@ -55,6 +63,9 @@ function getCurrentMonth() {
   return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}`;
 }
 
+/** 
+ * Return day of year (1 to 366) for daily quotes 
+ */
 function getDayOfYear(dateObj = new Date()) {
   const start = new Date(dateObj.getFullYear(), 0, 0);
   const diff = dateObj - start + (start.getTimezoneOffset() - dateObj.getTimezoneOffset()) * 60 * 1000;
@@ -90,7 +101,7 @@ function takeDayOff() {
   const settings = getSettings();
   const todayStr = formatDate();
   if (settings.dayOffRecords.includes(todayStr)) {
-    return false;
+    return false; // Already taken
   }
   settings.dayOffRecords.push(todayStr);
   setData(SETTINGS_KEY, settings);
@@ -131,6 +142,7 @@ function getRoutineById(routineId) {
 
 function addRoutine(name, habits) {
   const routines = getAllRoutines();
+  // Duplicate name check
   const dup = routines.find(r => r.name.toLowerCase() === name.toLowerCase());
   if (dup) {
     alert("A routine with this name already exists!");
@@ -155,7 +167,7 @@ function updateRoutine(routineId, updatedObj) {
   const idx = routines.findIndex(r => r.id === routineId);
   if (idx < 0) return false;
 
-  // Check if name is changing
+  // If changing name, check duplicates
   if (
     updatedObj.name &&
     updatedObj.name.toLowerCase() !== routines[idx].name.toLowerCase()
@@ -192,12 +204,11 @@ function completeHabit(routineId, habitIndex) {
   let habit = routine.habits[habitIndex];
   const todayStr = formatDate();
 
-  // If habit is already completed today, do nothing
+  // If already completed today, do nothing
   if (habit.lastCompletedDate === todayStr) return;
 
-  // Update streak logic
   if (!habit.lastCompletedDate) {
-    // first time
+    // first time completion
     habit.streak = 1;
   } else {
     const lastDone = new Date(habit.lastCompletedDate);
@@ -207,7 +218,7 @@ function completeHabit(routineId, habitIndex) {
     if (diffDays === 1) {
       habit.streak += 1;
     } else if (diffDays > 1) {
-      // check if all missed days were day-offs
+      // Check if all missed days were day-offs
       let isAllDayOff = true;
       for (let i = 1; i < diffDays; i++) {
         const checkDate = new Date(lastDone);
@@ -218,11 +229,7 @@ function completeHabit(routineId, habitIndex) {
           break;
         }
       }
-      if (isAllDayOff) {
-        habit.streak += 1;
-      } else {
-        habit.streak = 1;
-      }
+      habit.streak = isAllDayOff ? habit.streak + 1 : 1;
     }
   }
 
@@ -231,7 +238,7 @@ function completeHabit(routineId, habitIndex) {
   // Save updated routine
   setData(ROUTINES_KEY, routines);
 
-  // Also log it in COMPLETIONS_KEY
+  // Log in COMPLETIONS_KEY
   let completions = getData(COMPLETIONS_KEY, {});
   if (!completions[todayStr]) completions[todayStr] = [];
   const alreadyLogged = completions[todayStr].some(
@@ -244,8 +251,7 @@ function completeHabit(routineId, habitIndex) {
 }
 
 /**
- * Removes the completion record for routineId & habitIndex on today's date
- * AND reverts streak if it's the same day.
+ * Uncomplete a habit for the current day, revert streak if it was incremented today.
  */
 function uncompleteHabit(routineId, habitIndex, sameDay = true) {
   const routines = getAllRoutines();
@@ -255,7 +261,7 @@ function uncompleteHabit(routineId, habitIndex, sameDay = true) {
   let habit = routine.habits[habitIndex];
   const todayStr = formatDate();
 
-  // Remove from COMPLETIONS_KEY
+  // Remove from completions
   let completions = getData(COMPLETIONS_KEY, {});
   if (completions[todayStr]) {
     completions[todayStr] = completions[todayStr].filter(
@@ -264,13 +270,11 @@ function uncompleteHabit(routineId, habitIndex, sameDay = true) {
     setData(COMPLETIONS_KEY, completions);
   }
 
-  // If "uncomplete" is happening the same day, revert lastCompletedDate & streak
+  // If unchecking on the same day, revert
   if (sameDay && habit.lastCompletedDate === todayStr) {
-    // effectively remove today's completion
     habit.lastCompletedDate = "";
-    // revert the streak increment for today
-    // If the user had a multi-day streak, we do a minimal revert:
-    habit.streak = habit.streak > 0 ? habit.streak - 1 : 0;
+    // Decrement or reset streak for today's undone completion
+    habit.streak = Math.max(habit.streak - 1, 0);
   }
 
   setData(ROUTINES_KEY, routines);
@@ -285,6 +289,7 @@ function getCompletionsByDate(dateStr) {
  * Daily Quotes (366)
  ****************************************************/
 const DAILY_QUOTES = [
+  // 1
   "Every moment is a fresh beginning.",
   "Act as if what you do makes a difference. It does.",
   "Success is not final, failure is not fatal.",
@@ -305,6 +310,7 @@ const DAILY_QUOTES = [
   "Do one thing every day that scares you.",
   "Impossible is just an opinion.",
   "Happiness is not by chance, but by choice.",
+  // 21
   "If you’re offered a seat on a rocket ship, don’t ask what seat! Just get on.",
   "First, think. Second, believe. Third, dream. And finally, dare.",
   "It always seems impossible until it’s done.",
@@ -315,6 +321,7 @@ const DAILY_QUOTES = [
   "If you can dream it, you can do it.",
   "Turn your wounds into wisdom.",
   "Wherever you go, go with all your heart.",
+  // 31
   "The most wasted of days is one without laughter.",
   "Focus on the journey, not the destination.",
   "Stay hungry. Stay foolish.",
@@ -325,6 +332,7 @@ const DAILY_QUOTES = [
   "Keep going. Everything you need will come to you at the perfect time.",
   "You are never too old to set a new goal or to dream a new dream.",
   "However difficult life may seem, there is always something you can do.",
+  // 41
   "Anyone who has never made a mistake has never tried anything new.",
   "No one is perfect - that's why pencils have erasers.",
   "A person who never made a mistake never tried anything new.",
@@ -335,6 +343,7 @@ const DAILY_QUOTES = [
   "You can if you think you can.",
   "Failure is success in progress.",
   "Be yourself; everyone else is already taken.",
+  // 51
   "The best way out is always through.",
   "Begin anywhere.",
   "Nothing will work unless you do.",
@@ -345,6 +354,7 @@ const DAILY_QUOTES = [
   "Do something wonderful, people may imitate it.",
   "Don't wait for opportunity. Create it.",
   "Your big opportunity may be right where you are now.",
+  // 61
   "The secret of getting ahead is getting started.",
   "Don't let yesterday take up too much of today.",
   "Don’t wait. The time will never be just right.",
@@ -355,6 +365,7 @@ const DAILY_QUOTES = [
   "The journey of a thousand miles begins with one step.",
   "The mind is everything. What you think you become.",
   "You miss 100% of the shots you don’t take.",
+  // 71
   "Life is like riding a bicycle. To keep your balance, you must keep moving.",
   "Well done is better than well said.",
   "If you can’t outplay them, outwork them.",
@@ -365,6 +376,7 @@ const DAILY_QUOTES = [
   "Don't be pushed by your problems; be led by your dreams.",
   "Your limitation—it’s only your imagination.",
   "Push yourself, because no one else is going to do it for you.",
+  // 81
   "Wake up with determination. Go to bed with satisfaction.",
   "Little things make big days.",
   "Dream it. Wish it. Do it.",
@@ -375,6 +387,7 @@ const DAILY_QUOTES = [
   "Stay positive. Work hard. Make it happen.",
   "The key to success is to focus on goals, not obstacles.",
   "You don’t have to be great to start, but you have to start to be great.",
+  // 91
   "Do something today that your future self will thank you for.",
   "Just believe in yourself. Even if you don’t, pretend that you do.",
   "The distance between insanity and genius is measured only by success.",
@@ -385,6 +398,7 @@ const DAILY_QUOTES = [
   "Your passion is waiting for your courage to catch up.",
   "Don’t be afraid to give up the good to go for the great.",
   "Everything you can imagine is real.",
+  // 101
   "Normality is a paved road: it’s comfortable to walk, but no flowers grow on it.",
   "The road to success is always under construction.",
   "If you think you can, you can. And if you think you can’t, you’re right.",
@@ -395,6 +409,7 @@ const DAILY_QUOTES = [
   "Learn the rules like a pro, so you can break them like an artist.",
   "Whatever you are, be a good one.",
   "Life’s too mysterious to take too serious.",
+  // 111
   "Don’t be the same. Be better.",
   "You are what you do, not what you say you’ll do.",
   "It does not matter how slowly you go as long as you do not stop.",
@@ -405,6 +420,7 @@ const DAILY_QUOTES = [
   "Do what is right, not what is easy.",
   "Don’t wish it were easier. Wish you were better.",
   "If you believe in yourself enough and know what you want, you’re gonna make it happen.",
+  // 121
   "Never give up on a dream just because of the time it will take to accomplish it.",
   "Things work out best for those who make the best of how things work out.",
   "To live a creative life, we must lose our fear of being wrong.",
@@ -415,6 +431,7 @@ const DAILY_QUOTES = [
   "Where focus goes, energy flows.",
   "Either run the day, or the day runs you.",
   "You can waste your life drawing lines. Or you can live your life crossing them.",
+  // 131
   "If you can dream it, you can achieve it.",
   "Don’t let small minds convince you that your dreams are too big.",
   "Whatever you do, do it well.",
@@ -425,6 +442,7 @@ const DAILY_QUOTES = [
   "Trust yourself. You know more than you think you do.",
   "A year from now you may wish you had started today.",
   "Dream beautiful dreams, and then work to make those dreams come true.",
+  // 141
   "Strive not to be a success, but rather to be of value.",
   "No pressure, no diamonds.",
   "What lies behind us and what lies before us are tiny matters compared to what lies within us.",
@@ -435,6 +453,7 @@ const DAILY_QUOTES = [
   "Once you choose hope, anything’s possible.",
   "Don’t let anyone dull your sparkle.",
   "It’s never too late for a new beginning in your life.",
+  // 151
   "Don’t count the days, make the days count.",
   "Problems are not stop signs; they are guidelines.",
   "Stay foolish to stay sane.",
@@ -445,6 +464,7 @@ const DAILY_QUOTES = [
   "Be addicted to bettering yourself.",
   "Collect moments, not things.",
   "Keep some room in your heart for the unimaginable.",
+  // 161
   "Failure will never overtake me if my determination to succeed is strong enough.",
   "Change the world by being yourself.",
   "The way to get started is to quit talking and begin doing.",
@@ -455,6 +475,7 @@ const DAILY_QUOTES = [
   "Don’t stop until you’re proud, and never settle for less than you deserve.",
   "Strength doesn’t come from what you can do. It comes from overcoming the things you once thought you couldn’t.",
   "Success is not for the lazy.",
+  // 171
   "Sweat is just fat crying.",
   "Do it now. Sometimes later becomes never.",
   "It’s not the load that breaks you down; it’s the way you carry it.",
@@ -465,6 +486,7 @@ const DAILY_QUOTES = [
   "Life isn’t about finding yourself. It’s about creating yourself.",
   "Today is your opportunity to build the tomorrow you want.",
   "You don’t get what you wish for. You get what you work for.",
+  // 181
   "Great things take time.",
   "Believe in yourself and all that you are. Know that there is something inside you greater than any obstacle.",
   "What comes easy won’t last. What lasts won’t come easy.",
@@ -475,6 +497,7 @@ const DAILY_QUOTES = [
   "Do what is right, not what is easy.",
   "Dreams don’t have deadlines.",
   "One step at a time is progress.",
+  // 191
   "Strength doesn’t come from what you can do. It comes from overcoming the things you thought you couldn’t.",
   "The key to success is to focus on goals, not obstacles.",
   "Fall in love with the process, and the results will come.",
@@ -485,6 +508,7 @@ const DAILY_QUOTES = [
   "Growth is painful. Change is painful. But nothing is as painful as staying stuck somewhere you don’t belong.",
   "If you’re going through hell, keep going.",
   "Stop being afraid of what could go wrong and start being excited about what could go right.",
+  // 201
   "The best way to predict the future is to create it.",
   "Success doesn’t come from what you do occasionally, it comes from what you do consistently.",
   "The greatest glory in living lies not in never falling, but in rising every time we fall.",
@@ -495,6 +519,7 @@ const DAILY_QUOTES = [
   "Don’t wait for opportunity. Create it.",
   "Don’t count the days. Make the days count.",
   "It’s not what we have in life but who we have in our life that matters.",
+  // 211
   "Hard work beats talent when talent doesn’t work hard.",
   "The secret to success is constancy to purpose.",
   "Do more things that make you forget to check your phone.",
@@ -505,6 +530,7 @@ const DAILY_QUOTES = [
   "Don’t ruin a good day by thinking about a bad yesterday. Let it go.",
   "Focus on what you can control.",
   "Be a voice, not an echo.",
+  // 221
   "Work hard, stay consistent, and be patient. Your time will come.",
   "When you feel like quitting, think about why you started.",
   "Some people look for a beautiful place. Others make a place beautiful.",
