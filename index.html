@@ -16,11 +16,11 @@
     <div style="text-align: center;">
       <h3 id="current-date"></h3>
       <h4 id="live-clock"></h4>
-      <!-- Quote of the Day -->
+      <!-- Daily Quote -->
       <p id="quote-of-day" class="quote-of-day"></p>
     </div>
 
-    <!-- Navigation Buttons (vertical) -->
+    <!-- Navigation Buttons -->
     <div class="nav-buttons">
       <button class="btn-primary" onclick="location.href='create-manage.html'">
         Create / Manage Routines
@@ -28,23 +28,21 @@
       <button class="btn-primary" onclick="location.href='todays-routine.html'">
         Today's Routine
       </button>
-      <button class="btn-secondary" id="take-day-off-btn">
-        Take a Day Off
-      </button>
+      <button class="btn-secondary" id="take-day-off-btn">Take a Day Off</button>
       <button class="btn-secondary" onclick="location.href='stats.html'">
         Stats
       </button>
     </div>
   </div>
 
-  <!-- Ensure app.js is loaded before the inline script that references it -->
+  <!-- JavaScript -->
   <script src="app.js"></script>
   <script>
-    // Display Current Date
+    // Show date
     const dateEl = document.getElementById("current-date");
     dateEl.textContent = new Date().toDateString();
 
-    // Live Clock Functionality
+    // Live clock
     const clockEl = document.getElementById("live-clock");
     function updateClock() {
       const now = new Date();
@@ -56,15 +54,16 @@
     setInterval(updateClock, 1000);
     updateClock();
 
-    // Display Daily Quote
+    // Show daily quote
     const quoteEl = document.getElementById("quote-of-day");
     const todaysQuote = getTodaysQuote();
-    quoteEl.textContent = todaysQuote;
+    quoteEl.textContent = todaysQuote || "Stay motivated! (No quotes found)";
 
-    // Quick Console Check (Optional)
-    console.log("Today's quote:", todaysQuote);
+    // Optional debug
+    console.log("Today's quote =>", todaysQuote);
+    console.log("Total quotes =>", DAILY_QUOTES.length);
 
-    // Take a Day Off Logic
+    // Day Off
     const takeDayOffBtn = document.getElementById("take-day-off-btn");
     takeDayOffBtn.addEventListener("click", () => {
       if (!confirm("Are you sure you want to take a day off today?")) return;
@@ -72,12 +71,10 @@
         const success = takeDayOff();
         if (success) {
           alert("Enjoy your day off!");
-          // Optionally, disable routine buttons or provide visual feedback
           takeDayOffBtn.disabled = true;
-          // Optionally, redirect to home or another page
         }
       } else {
-        alert("You've reached your day off limit or already took a day off today.");
+        alert("Day off limit reached or you already took a day off today.");
       }
     });
   </script>
