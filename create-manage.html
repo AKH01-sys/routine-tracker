@@ -12,6 +12,8 @@
   </div>
 
   <div class="container">
+
+    <!-- Create Routine Form -->
     <form id="new-routine-form">
       <div class="form-group">
         <label for="routine-name">Routine Name:</label>
@@ -23,10 +25,18 @@
       <button type="button" id="add-habit-btn">Add Habit</button><br><br>
       <button type="submit">Save Routine</button>
     </form>
+    <hr/>
+
+    <!-- Manage Existing Routines -->
+    <h3>Manage Existing Routines</h3>
+    <div id="routine-list"></div>
   </div>
 
   <script src="app.js"></script>
   <script>
+    /********************************************
+     * Create Routine
+     ********************************************/
     const form = document.getElementById('new-routine-form');
     const habitsContainer = document.getElementById('habits-container');
     const addHabitBtn = document.getElementById('add-habit-btn');
@@ -35,19 +45,23 @@
       const habitDiv = document.createElement('div');
       habitDiv.classList.add('form-group');
 
-      habitDiv.innerHTML = `
-        <label>Habit Title:</label>
+      const habitRowHtml = `
+        <label for="habitTitle">Habit Title:</label>
         <input type="text" name="habitTitle" required />
-        <label>Time:</label>
+        <label for="habitTime">Time:</label>
         <input type="time" name="habitTime" required />
       `;
+      habitDiv.innerHTML = habitRowHtml;
       habitsContainer.appendChild(habitDiv);
     }
 
+    // Start with one habit row
     addHabitRow();
 
+    // Add more habits
     addHabitBtn.addEventListener('click', addHabitRow);
 
+    // Save routine
     form.addEventListener('submit', (e) => {
       e.preventDefault();
       const routineName = document.getElementById('routine-name').value.trim();
@@ -63,14 +77,60 @@
         }
       });
 
-      habits.sort((a, b) => (a.time > b.time) ? 1 : -1);
+      // Sort habits by time
+      habits.sort((a, b) => (a.time > b.time ? 1 : -1));
 
-      addRoutine(routineName, habits);
-      alert("Routine saved successfully!");
-      form.reset();
-      habitsContainer.innerHTML = '';
-      addHabitRow();
+      const success = addRoutine(routineName, habits);
+      if (success) {
+        alert("Routine saved successfully!");
+        form.reset();
+        habitsContainer.innerHTML = '';
+        addHabitRow();
+        renderRoutines(); // Refresh the routine list
+      }
     });
+
+    /********************************************
+     * Manage Routines
+     ********************************************/
+    const routineListDiv = document.getElementById('routine-list');
+
+    function renderRoutines() {
+      routineListDiv.innerHTML = '';
+      const routines = getAllRoutines();
+      
+      if (routines.length === 0) {
+        routineListDiv.textContent = "No routines available.";
+        return;
+      }
+
+      routines.forEach(routine => {
+        const wrapper = document.createElement('div');
+        wrapper.classList.add('routine-item');
+        
+        // Title
+        const title = document.createElement('span');
+        title.textContent = routine.name;
+
+        // Delete button
+        const deleteBtn = document.createElement('button');
+        deleteBtn.textContent = "Delete";
+        deleteBtn.style.marginLeft = "1rem";
+        deleteBtn.addEventListener('click', () => {
+          if (confirm(`Are you sure you want to delete "${routine.name}"?`)) {
+            deleteRoutine(routine.id);
+            renderRoutines();
+          }
+        });
+
+        wrapper.appendChild(title);
+        wrapper.appendChild(deleteBtn);
+        routineListDiv.appendChild(wrapper);
+      });
+    }
+
+    // Initial load
+    renderRoutines();
   </script>
 </body>
 </html>
