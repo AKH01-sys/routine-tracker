@@ -20,10 +20,12 @@
 
   <script src="app.js"></script>
   <script>
+    // Display current date (local device time)
     const dateEl = document.getElementById('current-date');
     const today = new Date();
     dateEl.textContent = today.toDateString();
 
+    // Day Off functionality
     const takeDayOffBtn = document.getElementById('take-day-off-btn');
     takeDayOffBtn.addEventListener('click', () => {
       if (!confirm("Are you sure you want to take a day off?")) {
