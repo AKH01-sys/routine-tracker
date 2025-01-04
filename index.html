@@ -16,6 +16,7 @@
     <div style="text-align: center;">
       <h3 id="current-date"></h3>
       <h4 id="live-clock"></h4>
+      <!-- Quote of the Day -->
       <p id="quote-of-day" class="quote-of-day"></p>
     </div>
 
@@ -36,13 +37,14 @@
     </div>
   </div>
 
+  <!-- Ensure app.js is loaded before the inline script that references it -->
   <script src="app.js"></script>
   <script>
-    // Show date
+    // Display Current Date
     const dateEl = document.getElementById("current-date");
     dateEl.textContent = new Date().toDateString();
 
-    // Live clock
+    // Live Clock Functionality
     const clockEl = document.getElementById("live-clock");
     function updateClock() {
       const now = new Date();
@@ -54,11 +56,15 @@
     setInterval(updateClock, 1000);
     updateClock();
 
-    // Daily quote
+    // Display Daily Quote
     const quoteEl = document.getElementById("quote-of-day");
-    quoteEl.textContent = getTodaysQuote();
+    const todaysQuote = getTodaysQuote();
+    quoteEl.textContent = todaysQuote;
 
-    // Take day off logic
+    // Quick Console Check (Optional)
+    console.log("Today's quote:", todaysQuote);
+
+    // Take a Day Off Logic
     const takeDayOffBtn = document.getElementById("take-day-off-btn");
     takeDayOffBtn.addEventListener("click", () => {
       if (!confirm("Are you sure you want to take a day off today?")) return;
@@ -66,9 +72,12 @@
         const success = takeDayOff();
         if (success) {
           alert("Enjoy your day off!");
+          // Optionally, disable routine buttons or provide visual feedback
+          takeDayOffBtn.disabled = true;
+          // Optionally, redirect to home or another page
         }
       } else {
-        alert("You have reached your day off limit or already took a day off today.");
+        alert("You've reached your day off limit or already took a day off today.");
       }
     });
   </script>
