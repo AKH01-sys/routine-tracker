@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
   <title>Today's Routine</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <div class="header">
@@ -16,9 +16,9 @@
     <div id="day-off-warning" class="day-off-warning"></div>
 
     <div class="form-group">
-      <label for="routine-select">Choose a routine to follow:</label>
+      <label for="routine-select">Choose a routine:</label>
       <select id="routine-select"></select>
-      <button id="load-routine-btn" class="btn-primary">Load Routine</button>
+      <button id="load-btn" class="btn-primary">Load Routine</button>
     </div>
 
     <div id="habits-list"></div>
@@ -26,61 +26,64 @@
 
   <script src="app.js"></script>
   <script>
-    const routineSelect = document.getElementById('routine-select');
-    const loadRoutineBtn = document.getElementById('load-routine-btn');
-    const habitsListDiv = document.getElementById('habits-list');
-    const dayOffWarning = document.getElementById('day-off-warning');
-    const routines = getAllRoutines();
+    const routineSelect = document.getElementById("routine-select");
+    const loadBtn = document.getElementById("load-btn");
+    const habitsListDiv = document.getElementById("habits-list");
+    const dayOffWarning = document.getElementById("day-off-warning");
 
-    // If user took a day off today, disable loading routine
+    // Disable if user is on day off
     if (isDayOff()) {
-      dayOffWarning.textContent = "You've taken a day off today. Routine is disabled!";
-      loadRoutineBtn.disabled = true;
+      dayOffWarning.textContent = "You've taken a day off today! Routines are disabled.";
+      loadBtn.disabled = true;
     }
 
-    // Populate routine dropdown
-    routines.forEach(r => {
-      const opt = document.createElement('option');
-      opt.value = r.id;
-      opt.textContent = r.name;
-      routineSelect.appendChild(opt);
-    });
+    // Populate the select
+    const routines = getAllRoutines();
+    if (routines.length === 0) {
+      routineSelect.innerHTML = "<option value=''>No routines found</option>";
+    } else {
+      routines.forEach(r => {
+        const opt = document.createElement("option");
+        opt.value = r.id;
+        opt.textContent = r.name;
+        routineSelect.appendChild(opt);
+      });
+    }
 
-    loadRoutineBtn.addEventListener('click', () => {
-      habitsListDiv.innerHTML = '';
+    // Load routine
+    loadBtn.addEventListener("click", () => {
+      habitsListDiv.innerHTML = "";
       const selectedId = routineSelect.value;
-      const selectedRoutine = getRoutineById(selectedId);
-      if (!selectedRoutine) {
-        habitsListDiv.textContent = "No routine found.";
+      const routine = getRoutineById(selectedId);
+      if (!routine) {
+        habitsListDiv.textContent = "Routine not found or not selected.";
         return;
       }
 
-      selectedRoutine.habits.forEach((habit, habitIndex) => {
-        const label = document.createElement('label');
-        label.className = 'checkbox-label';
+      routine.habits.forEach((habit, idx) => {
+        const label = document.createElement("label");
+        label.classList.add("checkbox-label");
 
-        const checkbox = document.createElement('input');
-        checkbox.type = 'checkbox';
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
 
-        // Mark as complete => update streak if not done yet
-        checkbox.addEventListener('change', () => {
-          const spanText = label.querySelector('span');
+        // If user checks -> complete habit
+        checkbox.addEventListener("change", () => {
           if (checkbox.checked) {
-            spanText.classList.add('strikethrough');
-            completeHabit(selectedRoutine.id, habitIndex);
+            spanText.classList.add("strikethrough");
+            completeHabit(routine.id, idx);
           } else {
-            spanText.classList.remove('strikethrough');
-            // Not implementing "un-complete" logic for streak
+            spanText.classList.remove("strikethrough");
           }
         });
 
-        // If habit was already completed today, check it
+        // If habit completed today, pre-check
         if (habit.lastCompletedDate === formatDate()) {
           checkbox.checked = true;
-          checkbox.dispatchEvent(new Event('change'));
+          checkbox.dispatchEvent(new Event("change"));
         }
 
-        const spanText = document.createElement('span');
+        const spanText = document.createElement("span");
         spanText.textContent = `${habit.time} - ${habit.title}`;
 
         label.appendChild(checkbox);
