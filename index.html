@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
   <title>My Routine App - Home</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <div class="header">
@@ -28,21 +28,19 @@
 
   <script src="app.js"></script>
   <script>
-    const dateEl = document.getElementById('current-date');
+    const dateEl = document.getElementById("current-date");
     dateEl.textContent = new Date().toDateString();
 
-    const takeDayOffBtn = document.getElementById('take-day-off-btn');
-    takeDayOffBtn.addEventListener('click', () => {
-      if (!confirm("Are you sure you want to take a day off?")) {
-        return;
-      }
+    const takeDayOffBtn = document.getElementById("take-day-off-btn");
+    takeDayOffBtn.addEventListener("click", () => {
+      if (!confirm("Are you sure you want to take a day off today?")) return;
       if (canTakeDayOff()) {
         const success = takeDayOff();
         if (success) {
-          alert("Enjoy your day off! 🎉");
+          alert("Enjoy your day off!");
         }
       } else {
-        alert("Day off limit reached or already taken today. Undo in Stats if needed.");
+        alert("You have reached your day off limit or already took a day off today.");
       }
     });
   </script>
