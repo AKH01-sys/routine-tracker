@@ -33,7 +33,7 @@
     const habitsListDiv = document.getElementById("habits-list");
     const dayOffWarning = document.getElementById("day-off-warning");
 
-    // If day off is set for today, disable loading routines
+    // If day off is set for today, disable routine
     if (isDayOff()) {
       dayOffWarning.textContent = "You've taken a day off today! Routines are disabled.";
       loadBtn.disabled = true;
@@ -52,13 +52,13 @@
       });
     }
 
-    // Load selected routine
+    // Load Routine
     loadBtn.addEventListener("click", () => {
       habitsListDiv.innerHTML = "";
-      const selectedId = routineSelect.value;
+      const selectedId = routineSelect.value.trim();
       const routine = getRoutineById(selectedId);
       if (!routine) {
-        habitsListDiv.textContent = "No routine found or not selected.";
+        habitsListDiv.textContent = "Routine not found or not selected.";
         return;
       }
 
@@ -69,22 +69,20 @@
         const checkbox = document.createElement("input");
         checkbox.type = "checkbox";
 
-        // Check if completed today
+        // If completed today, check
         if (habit.lastCompletedDate === formatDate()) {
           checkbox.checked = true;
           label.classList.add("strikethrough");
         }
 
-        // Toggle check
+        // Listen for changes
         checkbox.addEventListener("change", () => {
-          const spanText = label.querySelector("span");
           if (checkbox.checked) {
-            spanText.classList.add("strikethrough");
+            label.classList.add("strikethrough");
             completeHabit(routine.id, idx);
           } else {
-            spanText.classList.remove("strikethrough");
-            uncompleteHabit(routine.id, idx, true); 
-            // The 'true' parameter isn't necessary unless you want to pass context
+            label.classList.remove("strikethrough");
+            uncompleteHabit(routine.id, idx, true);
           }
         });
 
