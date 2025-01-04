@@ -1,4 +1,4 @@
-/* Global reset / base */
+/* Base styling */
 body {
   margin: 0;
   padding: 0;
@@ -7,8 +7,9 @@ body {
   color: #333;
 }
 
+/* Header */
 .header {
-  position: relative; /* So we can place the back button */
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -22,6 +23,7 @@ body {
   left: 1rem;
 }
 
+/* Container */
 .container {
   max-width: 600px;
   margin: 1rem auto;
@@ -30,7 +32,44 @@ body {
   border-radius: 4px;
 }
 
-/* Buttons - color-coded */
+/* Form elements */
+.form-group {
+  margin-bottom: 1rem;
+}
+
+label {
+  margin-right: 0.5rem;
+}
+
+input[type="text"],
+input[type="time"],
+input[type="number"] {
+  padding: 0.4rem;
+  margin-right: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+/* Habit row layout */
+.habit-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+/* Routine list items */
+.routine-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.routine-item span {
+  font-weight: 500;
+}
+
+/* Buttons */
 button {
   margin: 0.3rem 0;
   padding: 0.65rem 1rem;
@@ -40,7 +79,7 @@ button {
   font-size: 1rem;
 }
 
-/* Color classes for different actions */
+/* Different button colors */
 .btn-primary {
   background-color: #3B82F6; /* Blue */
   color: #fff;
@@ -73,42 +112,7 @@ button {
   background-color: #45A049;
 }
 
-/* Form styling */
-.form-group {
-  margin-bottom: 1rem;
-}
-
-label {
-  display: inline-block;
-  margin-right: 0.5rem;
-}
-
-input[type="text"],
-input[type="time"],
-input[type="number"] {
-  padding: 0.4rem;
-  margin-right: 0.5rem;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-}
-
-.habit-row {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0.5rem;
-}
-
-.routine-item {
-  display: flex;
-  align-items: center;
-  margin-bottom: 0.5rem;
-}
-
-.routine-item span {
-  font-weight: 500;
-}
-
+/* Checkbox row */
 .checkbox-label {
   display: flex;
   align-items: center;
@@ -119,11 +123,13 @@ input[type="number"] {
   margin-right: 0.5rem;
 }
 
+/* Strikethrough styling */
 .strikethrough {
   text-decoration: line-through;
   color: #888;
 }
 
+/* Warnings & messages */
 .limit-warning {
   color: red;
   font-weight: bold;
@@ -135,17 +141,9 @@ input[type="number"] {
   margin-bottom: 1rem;
 }
 
-/* Navigation buttons: vertical by default */
+/* Navigation buttons always column */
 .nav-buttons {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-}
-
-/* Larger screens: arrange nav buttons horizontally */
-@media (min-width: 768px) {
-  .nav-buttons {
-    flex-direction: row;
-    justify-content: space-around;
-  }
+  gap: 0.75rem;
 }
