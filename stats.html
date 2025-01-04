@@ -37,7 +37,7 @@
 
     <hr />
 
-    <!-- Calendar View -->
+    <!-- Calendar View for Past Completions -->
     <h3>Calendar View</h3>
     <div class="form-group">
       <label for="calendar-date">Pick a Date:</label>
@@ -53,7 +53,7 @@
     const dayOffLimitInput = document.getElementById("day-off-limit");
     const updateLimitBtn = document.getElementById("update-limit-btn");
     const undoDayOffBtn = document.getElementById("undo-day-off-btn");
-    const dayOffInfo = document.getElementById("day-off-info");
+    const dayOffInfoDiv = document.getElementById("day-off-info");
 
     function refreshDayOffInfo() {
       const settings = getSettings();
@@ -67,7 +67,7 @@
         warning = "<p class='limit-warning'>You have reached your day-off limit.</p>";
       }
 
-      dayOffInfo.innerHTML = `
+      dayOffInfoDiv.innerHTML = `
         <p>Days off used this month: <strong>${usedThisMonth}</strong></p>
         <p>Day off limit: <strong>${settings.dayOffLimit}</strong></p>
         ${warning}
@@ -89,7 +89,7 @@
     undoDayOffBtn.addEventListener("click", () => {
       const success = undoDayOff();
       if (success) {
-        alert("Today's day off has been undone!");
+        alert("Today's day off has been undone.");
       } else {
         alert("No day off to undo for today.");
       }
@@ -103,6 +103,7 @@
     const showStatsBtn = document.getElementById("show-stats-btn");
     const routineStatsDiv = document.getElementById("routine-stats");
 
+    // Populate the select
     const allRoutines = getAllRoutines();
     if (allRoutines.length === 0) {
       routineStatsSelect.innerHTML = "<option>No routines</option>";
@@ -117,7 +118,7 @@
 
     showStatsBtn.addEventListener("click", () => {
       routineStatsDiv.innerHTML = "";
-      const selectedId = routineStatsSelect.value;
+      const selectedId = routineStatsSelect.value.trim();
       const routine = getRoutineById(selectedId);
       if (!routine) {
         routineStatsDiv.textContent = "No routine found.";
@@ -131,7 +132,6 @@
         <h4>Habits & Streaks</h4>
       `;
 
-      // Show each habit's streak
       routine.habits.forEach(h => {
         statsHtml += `
           <p>Habit: <strong>${h.title}</strong>, Streak: <strong>${h.streak}</strong></p>
@@ -153,7 +153,6 @@
         calendarHistoryDiv.textContent = "Please pick a date.";
         return;
       }
-      // Retrieve completions
       const completions = getCompletionsByDate(selectedDate);
       if (completions.length === 0) {
         calendarHistoryDiv.textContent = "No habits completed on that date.";
@@ -182,7 +181,6 @@
         habitIndexes.forEach(idx => {
           const h = r.habits[idx];
           const p = document.createElement("p");
-          // Instead of "Habit Completed: X", show "✅ X"
           p.textContent = `✅ ${h.title}`;
           wrapper.appendChild(p);
         });
