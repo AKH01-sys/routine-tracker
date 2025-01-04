@@ -12,12 +12,14 @@
   </div>
 
   <div class="container">
+    <!-- Date, Live Clock, and Daily Quote -->
     <div style="text-align: center;">
       <h3 id="current-date"></h3>
       <h4 id="live-clock"></h4>
       <p id="quote-of-day" class="quote-of-day"></p>
     </div>
 
+    <!-- Navigation Buttons -->
     <div class="nav-buttons">
       <button class="btn-primary" onclick="location.href='create-manage.html'">
         Create / Manage Routines
@@ -25,20 +27,23 @@
       <button class="btn-primary" onclick="location.href='todays-routine.html'">
         Today's Routine
       </button>
-      <button class="btn-secondary" id="take-day-off-btn">Take a Day Off</button>
+      <button class="btn-secondary" id="take-day-off-btn">
+        Take a Day Off
+      </button>
       <button class="btn-secondary" onclick="location.href='stats.html'">
         Stats
       </button>
     </div>
   </div>
 
+  <!-- Ensure app.js is loaded so the day-off functions & quotes are available -->
   <script src="app.js"></script>
   <script>
-    // Show date
+    // Display Current Date
     const dateEl = document.getElementById("current-date");
     dateEl.textContent = new Date().toDateString();
 
-    // Live clock
+    // Live Clock
     const clockEl = document.getElementById("live-clock");
     function updateClock() {
       const now = new Date();
@@ -52,22 +57,24 @@
 
     // Show daily quote
     const quoteEl = document.getElementById("quote-of-day");
-    const todaysQuote = getTodaysQuote(); 
-    quoteEl.textContent = todaysQuote;
+    const todaysQuote = getTodaysQuote();
+    quoteEl.textContent = todaysQuote || "Keep pushing forward!";
 
-    // Debug checks
-    console.log("Today's quote =>", todaysQuote);
-    console.log("Quotes array length =>", DAILY_QUOTES.length);
-
-    // Take Day Off
+    // Old-Style Day Off Logic
     const takeDayOffBtn = document.getElementById("take-day-off-btn");
     takeDayOffBtn.addEventListener("click", () => {
-      if (!confirm("Are you sure you want to take a day off today?")) return;
+      if (!confirm("Are you sure you want to take a day off today?")) {
+        return;
+      }
+
       if (canTakeDayOff()) {
         const success = takeDayOff();
         if (success) {
           alert("Enjoy your day off!");
+          // Optionally disable the button so user can't re-click
           takeDayOffBtn.disabled = true;
+        } else {
+          alert("Could not record your day off. Possibly a localStorage error.");
         }
       } else {
         alert("Day off limit reached or you already took a day off today.");
