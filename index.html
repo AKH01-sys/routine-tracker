@@ -1,31 +1,28 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>My Routine App - Home</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div class="header">
     <h2 id="current-date"></h2>
   </div>
 
-  <div class="container">
-    <button onclick="location.href='create-manage.html'">Create / Manage Routines</button>
-    <button onclick="location.href='todays-routine.html'">Today's Routine</button>
-    <button id="take-day-off-btn">Take a Day Off</button>
-    <button onclick="location.href='stats.html'">Stats</button>
+  <div class="container nav-buttons">
+    <button class="btn-primary" onclick="location.href='create-manage.html'">Create / Manage Routines</button>
+    <button class="btn-primary" onclick="location.href='todays-routine.html'">Today's Routine</button>
+    <button class="btn-secondary" id="take-day-off-btn">Take a Day Off</button>
+    <button class="btn-secondary" onclick="location.href='stats.html'">Stats</button>
   </div>
 
   <script src="app.js"></script>
   <script>
-    // Display current date (local device time)
     const dateEl = document.getElementById('current-date');
-    const today = new Date();
-    dateEl.textContent = today.toDateString();
+    dateEl.textContent = new Date().toDateString();
 
-    // Day Off functionality
     const takeDayOffBtn = document.getElementById('take-day-off-btn');
     takeDayOffBtn.addEventListener('click', () => {
       if (!confirm("Are you sure you want to take a day off?")) {
@@ -35,7 +32,7 @@
         takeDayOff();
         alert("Enjoy your day off! 🎉");
       } else {
-        alert("Day off limit reached! Please adjust your limit in Stats if needed.");
+        alert("Day off limit reached or you've already taken a day off today. Undo day off in Stats if needed.");
       }
     });
   </script>
