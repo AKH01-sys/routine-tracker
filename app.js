@@ -16,12 +16,17 @@ function setData(key, value) {
 const ROUTINES_KEY = "routines";
 const SETTINGS_KEY = "settings";
 /**
- * Settings shape:
+ * We'll store daily habit completions in a separate object:
  * {
- *   dayOffLimit: 3,
- *   dayOffRecords: [ "2025-01-10", ... ]
+ *   "YYYY-MM-DD": [
+ *     { routineId: "...", habitIndex: 0 },
+ *     { routineId: "...", habitIndex: 1 },
+ *   ],
+ *   ...
  * }
  */
+const COMPLETIONS_KEY = "completions";
+
 initAppData();
 
 /** 
@@ -34,8 +39,11 @@ function initAppData() {
     dayOffLimit: 3,
     dayOffRecords: []
   });
+  let completions = getData(COMPLETIONS_KEY, {}); // store daily completions
   setData(ROUTINES_KEY, routines);
   setData(SETTINGS_KEY, settings);
+  setData(COMPLETIONS_KEY, completions);
+
   purgeOldDayOffRecords();
 }
 
@@ -63,6 +71,15 @@ function formatDate(date = new Date()) {
 function getCurrentMonth() {
   const today = new Date();
   return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}`;
+}
+
+/** Day-of-year (1 to 366) for daily quotes */
+function getDayOfYear(dateObj = new Date()) {
+  // Jan 1 is day 1; Dec 31 is day 365 or 366 in leap years
+  const start = new Date(dateObj.getFullYear(), 0, 0);
+  const diff = dateObj - start + (start.getTimezoneOffset() - dateObj.getTimezoneOffset()) * 60 * 1000;
+  const oneDay = 1000 * 60 * 60 * 24;
+  return Math.floor(diff / oneDay);
 }
 
 /****************************************************
@@ -208,9 +225,8 @@ function deleteRoutine(routineId) {
  * Habit Completion & Streak
  ****************************************************/
 /**
- * - If habit is completed today already, do nothing.
- * - If there's exactly 1 day gap or all missed days are day-offs, streak increments.
- * - Otherwise, streak resets to 1.
+ * We'll also record completions in COMPLETIONS_KEY:
+ * completions[YYYY-MM-DD] = [ {routineId, habitIndex}, ... ]
  */
 function completeHabit(routineId, habitIndex) {
   const routines = getAllRoutines();
@@ -252,4 +268,24 @@ function completeHabit(routineId, habitIndex) {
   }
   habit.lastCompletedDate = todayStr;
   setData(ROUTINES_KEY, routines);
+
+  // Also log it in COMPLETIONS_KEY
+  let completions = getData(COMPLETIONS_KEY, {});
+  if (!completions[todayStr]) {
+    completions[todayStr] = [];
+  }
+  // If not already in today's completions, add it
+  const alreadyLogged = completions[todayStr].some(
+    x => x.routineId === routineId && x.habitIndex === habitIndex
+  );
+  if (!alreadyLogged) {
+    completions[todayStr].push({ routineId, habitIndex });
+  }
+  setData(COMPLETIONS_KEY, completions);
+}
+
+/** Retrieve completions data for a given date */
+function getCompletionsByDate(dateStr) {
+  const completions = getData(COMPLETIONS_KEY, {});
+  return completions[dateStr] || [];
 }
