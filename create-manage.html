@@ -45,7 +45,6 @@
     const routineList = document.getElementById("routine-list");
     const formTitle = document.getElementById("form-title");
 
-    // Start with one row
     createHabitRow();
 
     function createHabitRow(habit = { title: "", time: "" }) {
@@ -61,7 +60,6 @@
       rowDiv.querySelector(".delete-habit-btn").addEventListener("click", () => {
         rowDiv.remove();
       });
-
       habitsContainer.appendChild(rowDiv);
     }
 
@@ -84,7 +82,6 @@
           habits.push({ title, time });
         }
       });
-
       // Sort by time
       habits.sort((a, b) => a.time.localeCompare(b.time));
 
@@ -133,6 +130,7 @@
         div.classList.add("routine-item");
         div.innerHTML = `<span>${r.name}</span>`;
 
+        // Edit
         const editBtn = document.createElement("button");
         editBtn.textContent = "Edit";
         editBtn.classList.add("btn-secondary");
@@ -140,6 +138,7 @@
         editBtn.addEventListener("click", () => loadRoutine(r.id));
         div.appendChild(editBtn);
 
+        // Delete
         const delBtn = document.createElement("button");
         delBtn.textContent = "Delete";
         delBtn.classList.add("btn-danger");
@@ -162,7 +161,7 @@
       routineIdInput.value = r.id;
       routineNameInput.value = r.name;
       formTitle.textContent = `Editing: ${r.name}`;
-      saveBtn.textContent = "Save Changes";
+      saveBtn.textContent = "Save Routine";
 
       habitsContainer.innerHTML = "";
       r.habits.forEach(h => createHabitRow({ title: h.title, time: h.time }));
