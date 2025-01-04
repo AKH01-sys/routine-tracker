@@ -12,10 +12,18 @@
   </div>
 
   <div class="container nav-buttons">
-    <button class="btn-primary" onclick="location.href='create-manage.html'">Create / Manage Routines</button>
-    <button class="btn-primary" onclick="location.href='todays-routine.html'">Today's Routine</button>
-    <button class="btn-secondary" id="take-day-off-btn">Take a Day Off</button>
-    <button class="btn-secondary" onclick="location.href='stats.html'">Stats</button>
+    <button class="btn-primary" onclick="location.href='create-manage.html'">
+      Create / Manage Routines
+    </button>
+    <button class="btn-primary" onclick="location.href='todays-routine.html'">
+      Today's Routine
+    </button>
+    <button class="btn-secondary" id="take-day-off-btn">
+      Take a Day Off
+    </button>
+    <button class="btn-secondary" onclick="location.href='stats.html'">
+      Stats
+    </button>
   </div>
 
   <script src="app.js"></script>
@@ -29,10 +37,12 @@
         return;
       }
       if (canTakeDayOff()) {
-        takeDayOff();
-        alert("Enjoy your day off! 🎉");
+        const success = takeDayOff();
+        if (success) {
+          alert("Enjoy your day off! 🎉");
+        }
       } else {
-        alert("Day off limit reached or you've already taken a day off today. Undo day off in Stats if needed.");
+        alert("Day off limit reached or already taken today. Undo in Stats if needed.");
       }
     });
   </script>
