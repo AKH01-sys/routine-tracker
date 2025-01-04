@@ -13,6 +13,7 @@
 
   <div class="container">
     <div id="day-off-info"></div>
+    
     <div class="form-group">
       <label for="day-off-limit">Day Off Limit (Per Month):</label>
       <input type="number" id="day-off-limit" min="0" />
@@ -35,17 +36,23 @@
     const dayOffInfo = document.getElementById('day-off-info');
     const dayOffLimitInput = document.getElementById('day-off-limit');
     const updateLimitBtn = document.getElementById('update-limit-btn');
-
+    
+    // Basic day-off info refresh
     function refreshDayOffInfo() {
       const settings = getSettings();
       dayOffInfo.innerHTML = `
         <p>Days off used this month: ${settings.dayOffUsed}</p>
         <p>Day off limit: ${settings.dayOffLimit}</p>
-        ${settings.dayOffUsed >= settings.dayOffLimit ? '<p class="limit-warning">You have reached your limit!</p>' : ''}
+        ${
+          settings.dayOffUsed >= settings.dayOffLimit
+            ? '<p class="limit-warning">You have reached your limit!</p>'
+            : ''
+        }
       `;
       dayOffLimitInput.value = settings.dayOffLimit;
     }
 
+    // Update day-off limit
     updateLimitBtn.addEventListener('click', () => {
       const newLimit = parseInt(dayOffLimitInput.value, 10);
       if (isNaN(newLimit) || newLimit < 0) {
@@ -57,7 +64,38 @@
       alert("Day off limit updated!");
     });
 
+    // Initial load
     refreshDayOffInfo();
+
+    /********************************************
+     * Routine Stats (placeholder logic)
+     ********************************************/
+    const routineStatsSelect = document.getElementById('routine-stats-select');
+    const showRoutineStatsBtn = document.getElementById('show-routine-stats-btn');
+    const routineStatsDiv = document.getElementById('routine-stats');
+    const routines = getAllRoutines();
+
+    // Populate select
+    routines.forEach(r => {
+      const opt = document.createElement('option');
+      opt.value = r.id;
+      opt.textContent = r.name;
+      routineStatsSelect.appendChild(opt);
+    });
+
+    showRoutineStatsBtn.addEventListener('click', () => {
+      const selectedId = routineStatsSelect.value;
+      const routine = getRoutineById(selectedId);
+      if (!routine) {
+        routineStatsDiv.textContent = 'No routine found.';
+        return;
+      }
+      // Example stats display (actual logic can vary)
+      routineStatsDiv.innerHTML = `
+        <p>Routine Name: <strong>${routine.name}</strong></p>
+        <p>Number of Habits: <strong>${routine.habits.length}</strong></p>
+      `;
+    });
   </script>
 </body>
 </html>
