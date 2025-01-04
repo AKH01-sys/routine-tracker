@@ -3,34 +3,62 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1.0" />
-  <title>My Routine App - Home</title>
+  <title>Jaiveek Hegde Routine - Home</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <div class="header">
-    <h2 id="current-date"></h2>
+    <h2>Jaiveek Hegde Routine</h2>
   </div>
 
-  <div class="container nav-buttons">
-    <button class="btn-primary" onclick="location.href='create-manage.html'">
-      Create / Manage Routines
-    </button>
-    <button class="btn-primary" onclick="location.href='todays-routine.html'">
-      Today's Routine
-    </button>
-    <button class="btn-secondary" id="take-day-off-btn">
-      Take a Day Off
-    </button>
-    <button class="btn-secondary" onclick="location.href='stats.html'">
-      Stats
-    </button>
+  <div class="container">
+    <!-- Display Date and Live Clock -->
+    <div style="text-align: center;">
+      <h3 id="current-date"></h3>
+      <h4 id="live-clock"></h4>
+      <p id="quote-of-day" class="quote-of-day"></p>
+    </div>
+
+    <!-- Navigation Buttons (vertical) -->
+    <div class="nav-buttons">
+      <button class="btn-primary" onclick="location.href='create-manage.html'">
+        Create / Manage Routines
+      </button>
+      <button class="btn-primary" onclick="location.href='todays-routine.html'">
+        Today's Routine
+      </button>
+      <button class="btn-secondary" id="take-day-off-btn">
+        Take a Day Off
+      </button>
+      <button class="btn-secondary" onclick="location.href='stats.html'">
+        Stats
+      </button>
+    </div>
   </div>
 
   <script src="app.js"></script>
   <script>
+    // Show current date
     const dateEl = document.getElementById("current-date");
     dateEl.textContent = new Date().toDateString();
 
+    // Live clock
+    const clockEl = document.getElementById("live-clock");
+    function updateClock() {
+      const now = new Date();
+      const hh = String(now.getHours()).padStart(2, "0");
+      const mm = String(now.getMinutes()).padStart(2, "0");
+      const ss = String(now.getSeconds()).padStart(2, "0");
+      clockEl.textContent = `${hh}:${mm}:${ss}`;
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // Daily quote
+    const quoteEl = document.getElementById("quote-of-day");
+    quoteEl.textContent = getTodaysQuote();
+
+    // Take day off logic
     const takeDayOffBtn = document.getElementById("take-day-off-btn");
     takeDayOffBtn.addEventListener("click", () => {
       if (!confirm("Are you sure you want to take a day off today?")) return;
@@ -38,6 +66,7 @@
         const success = takeDayOff();
         if (success) {
           alert("Enjoy your day off!");
+          // Optionally, disable Load Routine button on Home Page if necessary
         }
       } else {
         alert("You have reached your day off limit or already took a day off today.");
