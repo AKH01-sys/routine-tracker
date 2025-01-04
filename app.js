@@ -21,18 +21,54 @@ function setData(key, value) {
 const ROUTINES_KEY = 'routines';
 const SETTINGS_KEY = 'settings';
 
-// Settings structure example:
-// {
-//   dayOffLimit: 3,
-//   dayOffRecords: ['2025-01-01', '2025-01-15'], // if user took day off on these dates
-// }
+/** 
+ * Settings structure:
+ * {
+ *   dayOffLimit: 3,
+ *   dayOffRecords: ['2025-01-05', '2025-01-10', ...] // Days off taken this month
+ * }
+ *
+ * Routine structure:
+ * {
+ *   id: 'routine-...',
+ *   name: 'Morning Routine',
+ *   habits: [
+ *     {
+ *       title: 'Drink Water',
+ *       time: '07:00',
+ *       streak: 0,
+ *       lastCompletedDate: ''
+ *     },
+ *     ...
+ *   ]
+ * }
+ */
+
 function initAppData() {
-  let routines = getData(ROUTINES_KEY, []);
-  let settings = getData(SETTINGS_KEY, {
-    dayOffLimit: 3,
-    dayOffRecords: []
-  });
+  // Ensure default data is set
+  const routines = getData(ROUTINES_KEY, []);
+  const settings = getData(SETTINGS_KEY, { dayOffLimit: 3, dayOffRecords: [] });
+
   setData(ROUTINES_KEY, routines);
+  setData(SETTINGS_KEY, settings);
+
+  // Purge day-off records from previous months
+  purgeOldDayOffRecords();
+}
+
+/**
+ * Remove dayOffRecords that are outside the current month.
+ * So each new month starts fresh.
+ */
+function purgeOldDayOffRecords() {
+  let settings = getSettings();
+  const currentMonth = getCurrentMonth(); // e.g. "2025-01"
+
+  // Keep only those day-offs that start with currentMonth
+  settings.dayOffRecords = settings.dayOffRecords.filter(dateStr =>
+    dateStr.startsWith(currentMonth)
+  );
+
   setData(SETTINGS_KEY, settings);
 }
 
@@ -62,16 +98,6 @@ function generateRoutineId() {
 /********************************************
  * Routines
  ********************************************/
-// Routine structure example:
-// {
-//   id: 'routine-1234567-8910',
-//   name: 'Morning Routine',
-//   habits: [
-//     { title: 'Drink Water', time: '07:00', streak: 0, lastCompletedDate: '' },
-//     ...
-//   ]
-// }
-
 function getAllRoutines() {
   return getData(ROUTINES_KEY, []);
 }
@@ -84,10 +110,13 @@ function saveRoutines(routines) {
   setData(ROUTINES_KEY, routines);
 }
 
+/**
+ * Creates a new routine
+ */
 function addRoutine(routineName, habitsArray) {
   const routines = getAllRoutines();
 
-  // Check duplicate routine name (case-insensitive)
+  // Check for duplicate name (case-insensitive)
   const duplicate = routines.find(
     r => r.name.toLowerCase() === routineName.toLowerCase()
   );
@@ -96,13 +125,11 @@ function addRoutine(routineName, habitsArray) {
     return false;
   }
 
-  // Create new routine with unique ID
   const newRoutine = {
     id: generateRoutineId(),
     name: routineName,
     habits: habitsArray.map(h => ({
       ...h,
-      // Initialize streak fields
       streak: 0,
       lastCompletedDate: ''
     }))
@@ -113,19 +140,25 @@ function addRoutine(routineName, habitsArray) {
   return true;
 }
 
+/**
+ * Updates an existing routine
+ */
 function updateRoutine(routineId, updatedData) {
-  // updatedData should be an object with new name/habits/etc.
   let routines = getAllRoutines();
   const idx = routines.findIndex(r => r.id === routineId);
-  if (idx < 0) return false;
+  if (idx < 0) {
+    return false;
+  }
 
-  // Check for routine name duplicates if name is changed
+  // If user changed the name, check for duplicates
   if (
     updatedData.name &&
     updatedData.name.toLowerCase() !== routines[idx].name.toLowerCase()
   ) {
     const conflict = routines.find(
-      r => r.name.toLowerCase() === updatedData.name.toLowerCase() && r.id !== routineId
+      r =>
+        r.name.toLowerCase() === updatedData.name.toLowerCase() &&
+        r.id !== routineId
     );
     if (conflict) {
       alert('A routine with this name already exists. Choose a different name.');
@@ -133,15 +166,19 @@ function updateRoutine(routineId, updatedData) {
     }
   }
 
-  // Update the routine with new properties
+  // Merge new data
   routines[idx] = {
     ...routines[idx],
     ...updatedData
   };
+
   saveRoutines(routines);
   return true;
 }
 
+/**
+ * Delete a routine entirely
+ */
 function deleteRoutine(routineId) {
   const routines = getAllRoutines().filter(r => r.id !== routineId);
   saveRoutines(routines);
@@ -164,10 +201,10 @@ function completeHabit(routineId, habitIndex) {
     return;
   }
 
-  // Check if we missed days since last completion
-  // If exactly 1 day passed or if all missed days were day-offs, we keep streak
-  // If more days passed without day-offs, reset streak
-  if (habit.lastCompletedDate) {
+  // If first time completing, start streak at 1
+  if (!habit.lastCompletedDate) {
+    habit.streak = 1;
+  } else {
     const lastDate = new Date(habit.lastCompletedDate);
     const diffDays = Math.floor(
       (new Date(todayStr) - lastDate) / (24 * 60 * 60 * 1000)
@@ -177,13 +214,12 @@ function completeHabit(routineId, habitIndex) {
       // consecutive day
       habit.streak += 1;
     } else if (diffDays > 1) {
-      // check if day-offs for missed days
+      // check if all missed days were day-offs
       let isAllDayOff = true;
       for (let i = 1; i < diffDays; i++) {
         const missedDate = new Date(lastDate);
         missedDate.setDate(lastDate.getDate() + i);
-        const missedDateStr = formatDate(missedDate);
-        if (!isDayOff(missedDateStr)) {
+        if (!isDayOff(formatDate(missedDate))) {
           isAllDayOff = false;
           break;
         }
@@ -191,31 +227,18 @@ function completeHabit(routineId, habitIndex) {
       if (isAllDayOff) {
         habit.streak += 1;
       } else {
-        habit.streak = 1; // reset to 1 for today's completion
+        habit.streak = 1; // reset
       }
     }
-  } else {
-    // First time completion
-    habit.streak = 1;
   }
 
   habit.lastCompletedDate = todayStr;
   saveRoutines(routines);
 }
 
-function isDayOff(dateStr = formatDate()) {
-  const settings = getSettings();
-  return settings.dayOffRecords.includes(dateStr);
-}
-
 /********************************************
  * Settings / Day Off
  ********************************************/
-// Settings structure example:
-// {
-//   dayOffLimit: 3,
-//   dayOffRecords: ['2025-01-01', '2025-01-15']
-// }
 function getSettings() {
   return getData(SETTINGS_KEY, {
     dayOffLimit: 3,
@@ -230,43 +253,62 @@ function updateSettings(updates) {
 }
 
 /**
- * Check if user can take a day off today:
- * - user hasn't taken a day off for today's date
- * - # day-offs in current month < dayOffLimit
+ * Check if the user can take a day off today.
+ * - No day off taken for today's date
+ * - # used this month < dayOffLimit
  */
 function canTakeDayOff() {
   const settings = getSettings();
   const todayStr = formatDate();
-  // Already taken a day off for today?
+
+  // Already took a day off today?
   if (settings.dayOffRecords.includes(todayStr)) {
     return false;
   }
-  // Check how many day-offs this month
+
+  // Count how many day-offs in current month
   const currentMonth = getCurrentMonth();
-  const usedThisMonth = settings.dayOffRecords.filter(dateStr =>
-    dateStr.startsWith(currentMonth)
-  ).length;
+  const usedThisMonth = settings.dayOffRecords.filter(d => d.startsWith(currentMonth)).length;
   return usedThisMonth < settings.dayOffLimit;
 }
 
+/**
+ * Mark today as a day off
+ */
 function takeDayOff() {
-  let settings = getSettings();
   const todayStr = formatDate();
+  let settings = getSettings();
+
+  // In case user tries again
+  if (settings.dayOffRecords.includes(todayStr)) {
+    return false;
+  }
+
   settings.dayOffRecords.push(todayStr);
   setData(SETTINGS_KEY, settings);
+  return true;
 }
 
 /**
- * Undo a day off for today only
+ * Undo today's day off
  */
 function undoDayOff() {
-  let settings = getSettings();
   const todayStr = formatDate();
-  const index = settings.dayOffRecords.indexOf(todayStr);
-  if (index >= 0) {
-    settings.dayOffRecords.splice(index, 1);
+  let settings = getSettings();
+
+  const idx = settings.dayOffRecords.indexOf(todayStr);
+  if (idx >= 0) {
+    settings.dayOffRecords.splice(idx, 1);
     setData(SETTINGS_KEY, settings);
     return true;
   }
   return false;
+}
+
+/**
+ * Check if a given date is a day off
+ */
+function isDayOff(dateStr = formatDate()) {
+  const settings = getSettings();
+  return settings.dayOffRecords.includes(dateStr);
 }
