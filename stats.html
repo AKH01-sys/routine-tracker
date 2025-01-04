@@ -13,6 +13,7 @@
   </div>
 
   <div class="container">
+    <!-- Day Off Settings -->
     <div class="form-group">
       <label for="day-off-limit">Day Off Limit (Per Month):</label>
       <input type="number" id="day-off-limit" min="0" />
@@ -23,11 +24,13 @@
 
     <hr />
 
-    <!-- Routine Stats (Hide habit time, show only streak) -->
+    <!-- Routine Stats -->
     <h3>Routine Stats</h3>
     <div class="form-group">
       <label for="routine-stats-select">Select Routine:</label>
-      <select id="routine-stats-select"></select>
+      <select id="routine-stats-select">
+        <option value="">-- Select a Routine --</option>
+      </select>
       <button id="show-stats-btn" class="btn-primary">Show Stats</button>
     </div>
     <div id="routine-stats"></div>
@@ -95,7 +98,7 @@
 
     refreshDayOffInfo();
 
-    /********** Routine Stats (Hide Time, Show Only Title & Streak) **********/
+    /********** Routine Stats (Habits & Streaks) **********/
     const routineStatsSelect = document.getElementById("routine-stats-select");
     const showStatsBtn = document.getElementById("show-stats-btn");
     const routineStatsDiv = document.getElementById("routine-stats");
@@ -122,21 +125,22 @@
         return;
       }
 
-      // Show only habit title & streak
-      let habitStatsHtml = "";
+      // Display Routine Name and Number of Habits
+      let statsHtml = `
+        <p><strong>Routine Name:</strong> ${routine.name}</p>
+        <p><strong>Number of Habits:</strong> ${routine.habits.length}</p>
+        <hr/>
+        <h4>Habits & Streaks</h4>
+      `;
+
+      // Display each habit's title and streak
       routine.habits.forEach(h => {
-        habitStatsHtml += `
+        statsHtml += `
           <p>Habit: <strong>${h.title}</strong>, Streak: <strong>${h.streak}</strong></p>
         `;
       });
 
-      routineStatsDiv.innerHTML = `
-        <p><strong>Routine Name:</strong> ${routine.name}</p>
-        <p><strong>Number of Habits:</strong> ${routine.habits.length}</p>
-        <hr/>
-        <h4>Habits & Streaks (Time Hidden)</h4>
-        ${habitStatsHtml}
-      `;
+      routineStatsDiv.innerHTML = statsHtml;
     });
 
     /********** Calendar View **********/
@@ -151,14 +155,14 @@
         calendarHistoryDiv.textContent = "Please pick a date.";
         return;
       }
-      // Retrieve what was completed that day
+      // Retrieve completions for the selected date
       const completions = getCompletionsByDate(selectedDate);
       if (completions.length === 0) {
         calendarHistoryDiv.textContent = "No habits completed on that date.";
         return;
       }
 
-      // Group by routine
+      // Group completions by routine
       const routineMap = {};
       completions.forEach(c => {
         if (!routineMap[c.routineId]) routineMap[c.routineId] = [];
@@ -168,18 +172,21 @@
       // Build display
       for (let rId in routineMap) {
         const r = getRoutineById(rId);
-        if (!r) continue; // if routine no longer exists
+        if (!r) continue; // Skip if routine no longer exists
         const habitIndexes = routineMap[rId];
+
         const wrapper = document.createElement("div");
         wrapper.classList.add("calendar-history-item");
+
         const title = document.createElement("h4");
         title.textContent = `Routine: ${r.name}`;
         wrapper.appendChild(title);
 
         habitIndexes.forEach(idx => {
           const h = r.habits[idx];
+          // Display "✅ {habit name}"
           const p = document.createElement("p");
-          p.textContent = `Habit Completed: ${h.title}`;
+          p.textContent = `✅ ${h.title}`;
           wrapper.appendChild(p);
         });
 
