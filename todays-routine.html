@@ -33,16 +33,16 @@
     const habitsListDiv = document.getElementById("habits-list");
     const dayOffWarning = document.getElementById("day-off-warning");
 
-    // Disable routine loading if today is a day off
+    // If day off is set for today, disable loading routines
     if (isDayOff()) {
       dayOffWarning.textContent = "You've taken a day off today! Routines are disabled.";
       loadBtn.disabled = true;
     }
 
-    // Populate the dropdown with routines
+    // Populate the routine dropdown
     const routines = getAllRoutines();
     if (routines.length === 0) {
-      routineSelect.innerHTML = "<option value=''>No routines found</option>";
+      routineSelect.innerHTML = "<option value=''>No routines available</option>";
     } else {
       routines.forEach(r => {
         const opt = document.createElement("option");
@@ -52,13 +52,13 @@
       });
     }
 
-    // Load selected routine and display its habits
+    // Load selected routine
     loadBtn.addEventListener("click", () => {
       habitsListDiv.innerHTML = "";
       const selectedId = routineSelect.value;
       const routine = getRoutineById(selectedId);
       if (!routine) {
-        habitsListDiv.textContent = "Routine not found or not selected.";
+        habitsListDiv.textContent = "No routine found or not selected.";
         return;
       }
 
@@ -69,13 +69,13 @@
         const checkbox = document.createElement("input");
         checkbox.type = "checkbox";
 
-        // Check if habit was completed today
+        // Check if completed today
         if (habit.lastCompletedDate === formatDate()) {
           checkbox.checked = true;
           label.classList.add("strikethrough");
         }
 
-        // Handle checkbox changes
+        // Toggle check
         checkbox.addEventListener("change", () => {
           const spanText = label.querySelector("span");
           if (checkbox.checked) {
@@ -83,7 +83,8 @@
             completeHabit(routine.id, idx);
           } else {
             spanText.classList.remove("strikethrough");
-            uncompleteHabit(routine.id, idx);
+            uncompleteHabit(routine.id, idx, true); 
+            // The 'true' parameter isn't necessary unless you want to pass context
           }
         });
 
