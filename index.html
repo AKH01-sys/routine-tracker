@@ -12,15 +12,12 @@
   </div>
 
   <div class="container">
-    <!-- Display Date and Live Clock -->
     <div style="text-align: center;">
       <h3 id="current-date"></h3>
       <h4 id="live-clock"></h4>
-      <!-- Daily Quote -->
       <p id="quote-of-day" class="quote-of-day"></p>
     </div>
 
-    <!-- Navigation Buttons -->
     <div class="nav-buttons">
       <button class="btn-primary" onclick="location.href='create-manage.html'">
         Create / Manage Routines
@@ -35,7 +32,6 @@
     </div>
   </div>
 
-  <!-- JavaScript -->
   <script src="app.js"></script>
   <script>
     // Show date
@@ -56,14 +52,14 @@
 
     // Show daily quote
     const quoteEl = document.getElementById("quote-of-day");
-    const todaysQuote = getTodaysQuote();
-    quoteEl.textContent = todaysQuote || "Stay motivated! (No quotes found)";
+    const todaysQuote = getTodaysQuote(); 
+    quoteEl.textContent = todaysQuote;
 
-    // Optional debug
+    // Debug checks
     console.log("Today's quote =>", todaysQuote);
-    console.log("Total quotes =>", DAILY_QUOTES.length);
+    console.log("Quotes array length =>", DAILY_QUOTES.length);
 
-    // Day Off
+    // Take Day Off
     const takeDayOffBtn = document.getElementById("take-day-off-btn");
     takeDayOffBtn.addEventListener("click", () => {
       if (!confirm("Are you sure you want to take a day off today?")) return;
