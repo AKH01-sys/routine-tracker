@@ -232,9 +232,9 @@ function completeHabit(routineId, habitIndex) {
     habit.streak = 1;
   } else {
     const lastDone = new Date(habit.lastCompletedDate);
-    const diffDays = Math.floor(
-      (new Date(todayStr) - lastDone) / (24 * 60 * 60 * 1000)
-    );
+    const today = new Date(todayStr);
+    const diffTime = today - lastDone;
+    const diffDays = Math.floor(diffTime / (24 * 60 * 60 * 1000));
     if (diffDays === 1) {
       habit.streak += 1;
     } else if (diffDays > 1) {
@@ -289,6 +289,11 @@ function getCompletionsByDate(dateStr) {
  */
 
 const DAILY_QUOTES = [
+  /* Index 0 => dayOfYear = 1 (Jan 1)
+     Index 1 => dayOfYear = 2
+     ...
+     Index 365 => dayOfYear = 366
+  */
   "Every moment is a fresh beginning.",
   "Act as if what you do makes a difference. It does.",
   "Success is not final, failure is not fatal.",
@@ -454,7 +459,7 @@ const DAILY_QUOTES = [
   "The way to get started is to quit talking and begin doing.",
   "While there’s life, there’s hope.",
   "Win in your mind and you will win in your reality.",
-  // (Add more unique quotes here to reach 366)
+  // Add more unique quotes here to reach 366
 ];
 
 // If DAILY_QUOTES has fewer than 366 quotes, they will repeat
@@ -468,4 +473,215 @@ function getTodaysQuote() {
   // '-1' so Jan 1 => index 0
   // If we have fewer than 366 quotes, we use modulo to cycle through
   return DAILY_QUOTES[dayOfYearIndex];
+}
+
+/****************************************************
+ * Purge Old Day Off Records
+ ****************************************************/
+/**
+ * Remove dayOffRecords from previous months
+ */
+function purgeOldDayOffRecords() {
+  const settings = getSettings();
+  const currentMonth = getCurrentMonth(); // e.g., "2025-01"
+  // Keep only records from this month
+  settings.dayOffRecords = settings.dayOffRecords.filter(d => d.startsWith(currentMonth));
+  setData(SETTINGS_KEY, settings);
+}
+
+/****************************************************
+ * Settings / Day Off Helpers
+ ****************************************************/
+function canTakeDayOff() {
+  const settings = getSettings();
+  const todayStr = formatDate();
+  if (settings.dayOffRecords.includes(todayStr)) {
+    return false;
+  }
+  const currentMonth = getCurrentMonth();
+  const usedThisMonth = settings.dayOffRecords.filter(d => d.startsWith(currentMonth)).length;
+  return usedThisMonth < settings.dayOffLimit;
+}
+
+function takeDayOff() {
+  const settings = getSettings();
+  const todayStr = formatDate();
+  if (settings.dayOffRecords.includes(todayStr)) {
+    return false; // already taken
+  }
+  settings.dayOffRecords.push(todayStr);
+  setData(SETTINGS_KEY, settings);
+  return true;
+}
+
+function undoDayOff() {
+  const settings = getSettings();
+  const todayStr = formatDate();
+  const idx = settings.dayOffRecords.indexOf(todayStr);
+  if (idx >= 0) {
+    settings.dayOffRecords.splice(idx, 1);
+    setData(SETTINGS_KEY, settings);
+    return true;
+  }
+  return false;
+}
+
+function isDayOff(dateStr = formatDate()) {
+  const settings = getSettings();
+  return settings.dayOffRecords.includes(dateStr);
+}
+
+/****************************************************
+ * Routines Helpers
+ ****************************************************/
+function getAllRoutines() {
+  return getData(ROUTINES_KEY, []);
+}
+
+function getRoutineById(routineId) {
+  return getAllRoutines().find(r => r.id === routineId);
+}
+
+function addRoutine(name, habits) {
+  const routines = getAllRoutines();
+  // Check duplicate name
+  const dup = routines.find(r => r.name.toLowerCase() === name.toLowerCase());
+  if (dup) {
+    alert("A routine with this name already exists!");
+    return false;
+  }
+  const newRoutine = {
+    id: generateRoutineId(),
+    name,
+    habits: habits.map(h => ({
+      ...h,
+      streak: 0,
+      lastCompletedDate: ""
+    }))
+  };
+  routines.push(newRoutine);
+  setData(ROUTINES_KEY, routines);
+  return true;
+}
+
+function updateRoutine(routineId, updatedObj) {
+  let routines = getAllRoutines();
+  const idx = routines.findIndex(r => r.id === routineId);
+  if (idx < 0) return false;
+
+  // If changing name, check duplicates
+  if (
+    updatedObj.name &&
+    updatedObj.name.toLowerCase() !== routines[idx].name.toLowerCase()
+  ) {
+    const conflict = routines.find(
+      r => r.name.toLowerCase() === updatedObj.name.toLowerCase()
+    );
+    if (conflict) {
+      alert("A routine with this name already exists!");
+      return false;
+    }
+  }
+
+  routines[idx] = { ...routines[idx], ...updatedObj };
+  setData(ROUTINES_KEY, routines);
+  return true;
+}
+
+function deleteRoutine(routineId) {
+  let routines = getAllRoutines();
+  routines = routines.filter(r => r.id !== routineId);
+  setData(ROUTINES_KEY, routines);
+}
+
+/****************************************************
+ * Habit Completion & Streak Helpers
+ ****************************************************/
+function completeHabit(routineId, habitIndex) {
+  const routines = getAllRoutines();
+  const routine = routines.find(r => r.id === routineId);
+  if (!routine) return;
+
+  let habit = routine.habits[habitIndex];
+  const todayStr = formatDate();
+  if (habit.lastCompletedDate === todayStr) {
+    return; // already done
+  }
+  if (!habit.lastCompletedDate) {
+    // first time
+    habit.streak = 1;
+  } else {
+    const lastDone = new Date(habit.lastCompletedDate);
+    const today = new Date(todayStr);
+    const diffTime = today - lastDone;
+    const diffDays = Math.floor(diffTime / (24 * 60 * 60 * 1000));
+    if (diffDays === 1) {
+      habit.streak += 1;
+    } else if (diffDays > 1) {
+      // Check if all missed days were day-offs
+      let isAllDayOff = true;
+      for (let i = 1; i < diffDays; i++) {
+        const checkDate = new Date(lastDone);
+        checkDate.setDate(lastDone.getDate() + i);
+        if (!isDayOff(formatDate(checkDate))) {
+          isAllDayOff = false;
+          break;
+        }
+      }
+      if (isAllDayOff) {
+        habit.streak += 1;
+      } else {
+        habit.streak = 1;
+      }
+    }
+  }
+  habit.lastCompletedDate = todayStr;
+  setData(ROUTINES_KEY, routines);
+
+  // Also log it in COMPLETIONS_KEY
+  let completions = getData(COMPLETIONS_KEY, {});
+  if (!completions[todayStr]) {
+    completions[todayStr] = [];
+  }
+  // If not already in today's completions, add it
+  const alreadyLogged = completions[todayStr].some(
+    x => x.routineId === routineId && x.habitIndex === habitIndex
+  );
+  if (!alreadyLogged) {
+    completions[todayStr].push({ routineId, habitIndex });
+  }
+  setData(COMPLETIONS_KEY, completions);
+}
+
+/** Retrieve completions data for a given date */
+function getCompletionsByDate(dateStr) {
+  const completions = getData(COMPLETIONS_KEY, {});
+  return completions[dateStr] || [];
+}
+
+/****************************************************
+ * Daily Quotes Helpers
+ ****************************************************/
+/**
+ * Function to get today's quote based on day of the year.
+ */
+function getTodaysQuote() {
+  const dayOfYearIndex = (getDayOfYear() - 1) % DAILY_QUOTES.length; 
+  // '-1' so Jan 1 => index 0
+  // If we have fewer than 366 quotes, we use modulo to cycle through
+  return DAILY_QUOTES[dayOfYearIndex];
+}
+
+/****************************************************
+ * Purge Old Day Off Records
+ ****************************************************/
+/**
+ * Remove dayOffRecords from previous months
+ */
+function purgeOldDayOffRecords() {
+  const settings = getSettings();
+  const currentMonth = getCurrentMonth(); // e.g., "2025-01"
+  // Keep only records from this month
+  settings.dayOffRecords = settings.dayOffRecords.filter(d => d.startsWith(currentMonth));
+  setData(SETTINGS_KEY, settings);
 }
