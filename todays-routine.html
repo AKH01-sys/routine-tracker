@@ -26,20 +26,30 @@
     const routineSelect = document.getElementById('routine-select');
     const loadRoutineBtn = document.getElementById('load-routine-btn');
     const habitsListDiv = document.getElementById('habits-list');
-
     const routines = getAllRoutines();
 
-    routines.forEach((r, index) => {
+    // Populate dropdown
+    routines.forEach((r) => {
       const opt = document.createElement('option');
-      opt.value = index;
+      opt.value = r.id;
       opt.textContent = r.name;
       routineSelect.appendChild(opt);
     });
 
+    // (Optional) Mark habit complete in localStorage if needed
+    function markHabitComplete(routineId, habitIndex, isComplete) {
+      // Example: you might store completedHabits in localStorage
+      // For brevity, not fully implemented here
+    }
+
     loadRoutineBtn.addEventListener('click', () => {
       habitsListDiv.innerHTML = '';
-      const selectedIndex = parseInt(routineSelect.value, 10);
-      const selectedRoutine = routines[selectedIndex];
+      const selectedId = routineSelect.value;
+      const selectedRoutine = getRoutineById(selectedId);
+      if (!selectedRoutine) {
+        habitsListDiv.textContent = "No routine found.";
+        return;
+      }
 
       selectedRoutine.habits.forEach((habit, habitIndex) => {
         const label = document.createElement('label');
@@ -47,15 +57,12 @@
 
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
+        checkbox.id = `habit-${habitIndex}`;
+        
+        // Toggle strikethrough
         checkbox.addEventListener('change', () => {
-          const spanText = label.querySelector('span');
-          if (checkbox.checked) {
-            spanText.classList.add('strikethrough');
-            markHabitComplete(selectedIndex, habitIndex, true);
-          } else {
-            spanText.classList.remove('strikethrough');
-            markHabitComplete(selectedIndex, habitIndex, false);
-          }
+          spanText.classList.toggle('strikethrough', checkbox.checked);
+          markHabitComplete(selectedRoutine.id, habitIndex, checkbox.checked);
         });
 
         const spanText = document.createElement('span');
