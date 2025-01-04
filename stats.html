@@ -13,7 +13,6 @@
   </div>
 
   <div class="container">
-    <!-- Day Off Controls -->
     <div class="form-group">
       <label for="day-off-limit">Day Off Limit (Per Month):</label>
       <input type="number" id="day-off-limit" min="0" />
@@ -87,7 +86,7 @@
     undoDayOffBtn.addEventListener("click", () => {
       const success = undoDayOff();
       if (success) {
-        alert("Today's day off has been undone.");
+        alert("Today's day off has been undone!");
       } else {
         alert("No day off to undo for today.");
       }
@@ -127,10 +126,8 @@
       let habitStatsHtml = "";
       routine.habits.forEach(h => {
         habitStatsHtml += `
-          <p>
-            Habit: <strong>${h.title}</strong>, 
-            Streak: <strong>${h.streak}</strong>
-          </p>`;
+          <p>Habit: <strong>${h.title}</strong>, Streak: <strong>${h.streak}</strong></p>
+        `;
       });
 
       routineStatsDiv.innerHTML = `
@@ -171,7 +168,7 @@
       // Build display
       for (let rId in routineMap) {
         const r = getRoutineById(rId);
-        if (!r) continue;
+        if (!r) continue; // if routine no longer exists
         const habitIndexes = routineMap[rId];
         const wrapper = document.createElement("div");
         wrapper.classList.add("calendar-history-item");
