@@ -111,8 +111,7 @@ button {
   margin-right: 0.5rem;
 }
 
-.strikethrough span,
-.strikethrough input[type="checkbox"]:checked + span {
+.strikethrough {
   text-decoration: line-through;
   color: #888;
 }
@@ -135,13 +134,6 @@ button {
   color: #b91c1c;
   font-weight: bold;
   margin-bottom: 1rem;
-}
-
-.quote-of-day {
-  font-style: italic;
-  margin: 1rem 0 0.5rem 0;
-  font-size: 1.1rem;
-  text-align: center;
 }
 
 .calendar-history-item {
