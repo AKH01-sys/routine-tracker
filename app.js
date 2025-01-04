@@ -10,8 +10,8 @@ function setData(key, value) {
   try {
     localStorage.setItem(key, JSON.stringify(value));
   } catch (error) {
-    console.error('Error setting localStorage:', error);
-    alert('Failed to save data. localStorage might be full or unavailable.');
+    console.error("Error setting localStorage:", error);
+    alert("Failed to save data. localStorage might be full or unavailable.");
   }
 }
 
@@ -20,9 +20,10 @@ function setData(key, value) {
  ****************************************************/
 const ROUTINES_KEY = "routines";
 const SETTINGS_KEY = "settings";
-const COMPLETIONS_KEY = "completions"; // Stores daily completions
-const DAILY_QUOTES_KEY = "dailyQuotes"; // Stores quotes if needed
+const COMPLETIONS_KEY = "completions";
+const DAILY_QUOTES_KEY = "dailyQuotes";
 
+/** Initialize the app data */
 function initAppData() {
   let routines = getData(ROUTINES_KEY, []);
   let settings = getData(SETTINGS_KEY, { dayOffLimit: 3, dayOffRecords: [] });
@@ -34,7 +35,6 @@ function initAppData() {
   setData(COMPLETIONS_KEY, completions);
   setData(DAILY_QUOTES_KEY, dailyQuotes);
 
-  // Purge old day-off records from previous months
   purgeOldDayOffRecords();
 }
 
@@ -55,7 +55,6 @@ function getCurrentMonth() {
   return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}`;
 }
 
-/** Day-of-year (1 to 366) for daily quotes */
 function getDayOfYear(dateObj = new Date()) {
   const start = new Date(dateObj.getFullYear(), 0, 0);
   const diff = dateObj - start + (start.getTimezoneOffset() - dateObj.getTimezoneOffset()) * 60 * 1000;
@@ -71,7 +70,7 @@ function getSettings() {
 }
 
 function updateSettings(newSettings) {
-  let settings = getSettings();
+  const settings = getSettings();
   Object.assign(settings, newSettings);
   setData(SETTINGS_KEY, settings);
 }
@@ -91,7 +90,7 @@ function takeDayOff() {
   const settings = getSettings();
   const todayStr = formatDate();
   if (settings.dayOffRecords.includes(todayStr)) {
-    return false; // already taken
+    return false;
   }
   settings.dayOffRecords.push(todayStr);
   setData(SETTINGS_KEY, settings);
@@ -132,7 +131,6 @@ function getRoutineById(routineId) {
 
 function addRoutine(name, habits) {
   const routines = getAllRoutines();
-  // Check for duplicate
   const dup = routines.find(r => r.name.toLowerCase() === name.toLowerCase());
   if (dup) {
     alert("A routine with this name already exists!");
@@ -157,13 +155,12 @@ function updateRoutine(routineId, updatedObj) {
   const idx = routines.findIndex(r => r.id === routineId);
   if (idx < 0) return false;
 
+  // Check if name is changing
   if (
     updatedObj.name &&
     updatedObj.name.toLowerCase() !== routines[idx].name.toLowerCase()
   ) {
-    const conflict = routines.find(
-      r => r.name.toLowerCase() === updatedObj.name.toLowerCase()
-    );
+    const conflict = routines.find(r => r.name.toLowerCase() === updatedObj.name.toLowerCase());
     if (conflict) {
       alert("A routine with this name already exists!");
       return false;
@@ -194,19 +191,23 @@ function completeHabit(routineId, habitIndex) {
 
   let habit = routine.habits[habitIndex];
   const todayStr = formatDate();
-  if (habit.lastCompletedDate === todayStr) {
-    return; // already done for today
-  }
-  // Update streak
+
+  // If habit is already completed today, do nothing
+  if (habit.lastCompletedDate === todayStr) return;
+
+  // Update streak logic
   if (!habit.lastCompletedDate) {
+    // first time
     habit.streak = 1;
   } else {
     const lastDone = new Date(habit.lastCompletedDate);
     const today = new Date(todayStr);
     const diffDays = Math.floor((today - lastDone) / (24 * 60 * 60 * 1000));
+
     if (diffDays === 1) {
       habit.streak += 1;
     } else if (diffDays > 1) {
+      // check if all missed days were day-offs
       let isAllDayOff = true;
       for (let i = 1; i < diffDays; i++) {
         const checkDate = new Date(lastDone);
@@ -217,19 +218,24 @@ function completeHabit(routineId, habitIndex) {
           break;
         }
       }
-      habit.streak = isAllDayOff ? habit.streak + 1 : 1;
+      if (isAllDayOff) {
+        habit.streak += 1;
+      } else {
+        habit.streak = 1;
+      }
     }
   }
+
   habit.lastCompletedDate = todayStr;
+
+  // Save updated routine
   setData(ROUTINES_KEY, routines);
 
   // Also log it in COMPLETIONS_KEY
   let completions = getData(COMPLETIONS_KEY, {});
-  if (!completions[todayStr]) {
-    completions[todayStr] = [];
-  }
+  if (!completions[todayStr]) completions[todayStr] = [];
   const alreadyLogged = completions[todayStr].some(
-    x => x.routineId === routineId && x.habitIndex === habitIndex
+    c => c.routineId === routineId && c.habitIndex === habitIndex
   );
   if (!alreadyLogged) {
     completions[todayStr].push({ routineId, habitIndex });
@@ -239,21 +245,35 @@ function completeHabit(routineId, habitIndex) {
 
 /**
  * Removes the completion record for routineId & habitIndex on today's date
- * Does NOT revert streak by default. Adjust if needed.
+ * AND reverts streak if it's the same day.
  */
-function uncompleteHabit(routineId, habitIndex) {
+function uncompleteHabit(routineId, habitIndex, sameDay = true) {
+  const routines = getAllRoutines();
+  const routine = routines.find(r => r.id === routineId);
+  if (!routine) return;
+
+  let habit = routine.habits[habitIndex];
   const todayStr = formatDate();
+
+  // Remove from COMPLETIONS_KEY
   let completions = getData(COMPLETIONS_KEY, {});
+  if (completions[todayStr]) {
+    completions[todayStr] = completions[todayStr].filter(
+      c => !(c.routineId === routineId && c.habitIndex === habitIndex)
+    );
+    setData(COMPLETIONS_KEY, completions);
+  }
 
-  if (!completions[todayStr]) return;
+  // If "uncomplete" is happening the same day, revert lastCompletedDate & streak
+  if (sameDay && habit.lastCompletedDate === todayStr) {
+    // effectively remove today's completion
+    habit.lastCompletedDate = "";
+    // revert the streak increment for today
+    // If the user had a multi-day streak, we do a minimal revert:
+    habit.streak = habit.streak > 0 ? habit.streak - 1 : 0;
+  }
 
-  completions[todayStr] = completions[todayStr].filter(
-    c => !(c.routineId === routineId && c.habitIndex === habitIndex)
-  );
-  setData(COMPLETIONS_KEY, completions);
-
-  // If you want to revert streak, do it here:
-  // e.g., find the routine, reset or decrement streak, etc.
+  setData(ROUTINES_KEY, routines);
 }
 
 function getCompletionsByDate(dateStr) {
@@ -262,7 +282,7 @@ function getCompletionsByDate(dateStr) {
 }
 
 /****************************************************
- * Daily Quotes
+ * Daily Quotes (366)
  ****************************************************/
 const DAILY_QUOTES = [
   "Every moment is a fresh beginning.",
@@ -496,7 +516,7 @@ const DAILY_QUOTES = [
 ];
 
 /**
- * Returns today's quote based on day of the year.
+ * Returns today's quote based on day of the year
  */
 function getTodaysQuote() {
   const dayOfYearIndex = (getDayOfYear() - 1) % DAILY_QUOTES.length;
