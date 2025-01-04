@@ -13,7 +13,7 @@
   </div>
 
   <div class="container">
-    <!-- Day Off Settings -->
+    <!-- Day Off Controls -->
     <div class="form-group">
       <label for="day-off-limit">Day Off Limit (Per Month):</label>
       <input type="number" id="day-off-limit" min="0" />
@@ -37,7 +37,7 @@
 
     <hr />
 
-    <!-- Calendar View for Past Completions -->
+    <!-- Calendar View -->
     <h3>Calendar View</h3>
     <div class="form-group">
       <label for="calendar-date">Pick a Date:</label>
@@ -49,11 +49,11 @@
 
   <script src="app.js"></script>
   <script>
-    /********** Day Off Info **********/
+    /** DAY OFF INFO **/
     const dayOffLimitInput = document.getElementById("day-off-limit");
     const updateLimitBtn = document.getElementById("update-limit-btn");
     const undoDayOffBtn = document.getElementById("undo-day-off-btn");
-    const dayOffInfoDiv = document.getElementById("day-off-info");
+    const dayOffInfo = document.getElementById("day-off-info");
 
     function refreshDayOffInfo() {
       const settings = getSettings();
@@ -67,7 +67,7 @@
         warning = "<p class='limit-warning'>You have reached your day-off limit.</p>";
       }
 
-      dayOffInfoDiv.innerHTML = `
+      dayOffInfo.innerHTML = `
         <p>Days off used this month: <strong>${usedThisMonth}</strong></p>
         <p>Day off limit: <strong>${settings.dayOffLimit}</strong></p>
         ${warning}
@@ -98,12 +98,11 @@
 
     refreshDayOffInfo();
 
-    /********** Routine Stats (Habits & Streaks) **********/
+    /** ROUTINE STATS **/
     const routineStatsSelect = document.getElementById("routine-stats-select");
     const showStatsBtn = document.getElementById("show-stats-btn");
     const routineStatsDiv = document.getElementById("routine-stats");
 
-    // Populate routine select
     const allRoutines = getAllRoutines();
     if (allRoutines.length === 0) {
       routineStatsSelect.innerHTML = "<option>No routines</option>";
@@ -125,15 +124,14 @@
         return;
       }
 
-      // Display Routine Name and Number of Habits
       let statsHtml = `
         <p><strong>Routine Name:</strong> ${routine.name}</p>
         <p><strong>Number of Habits:</strong> ${routine.habits.length}</p>
-        <hr/>
+        <hr />
         <h4>Habits & Streaks</h4>
       `;
 
-      // Display each habit's title and streak
+      // Show each habit's streak
       routine.habits.forEach(h => {
         statsHtml += `
           <p>Habit: <strong>${h.title}</strong>, Streak: <strong>${h.streak}</strong></p>
@@ -143,7 +141,7 @@
       routineStatsDiv.innerHTML = statsHtml;
     });
 
-    /********** Calendar View **********/
+    /** CALENDAR VIEW **/
     const calendarDateInput = document.getElementById("calendar-date");
     const viewHistoryBtn = document.getElementById("view-history-btn");
     const calendarHistoryDiv = document.getElementById("calendar-history");
@@ -155,24 +153,23 @@
         calendarHistoryDiv.textContent = "Please pick a date.";
         return;
       }
-      // Retrieve completions for the selected date
+      // Retrieve completions
       const completions = getCompletionsByDate(selectedDate);
       if (completions.length === 0) {
         calendarHistoryDiv.textContent = "No habits completed on that date.";
         return;
       }
 
-      // Group completions by routine
+      // Group by routine
       const routineMap = {};
       completions.forEach(c => {
         if (!routineMap[c.routineId]) routineMap[c.routineId] = [];
         routineMap[c.routineId].push(c.habitIndex);
       });
 
-      // Build display
       for (let rId in routineMap) {
         const r = getRoutineById(rId);
-        if (!r) continue; // Skip if routine no longer exists
+        if (!r) continue;
         const habitIndexes = routineMap[rId];
 
         const wrapper = document.createElement("div");
@@ -184,8 +181,8 @@
 
         habitIndexes.forEach(idx => {
           const h = r.habits[idx];
-          // Display "✅ {habit name}"
           const p = document.createElement("p");
+          // Instead of "Habit Completed: X", show "✅ X"
           p.textContent = `✅ ${h.title}`;
           wrapper.appendChild(p);
         });
