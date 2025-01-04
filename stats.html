@@ -1,50 +1,61 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Stats</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div class="header">
+    <button class="btn-secondary back-btn" onclick="window.history.back()">← Back</button>
     <h2>Stats & Settings</h2>
   </div>
 
   <div class="container">
-    <div id="day-off-info"></div>
-    
     <div class="form-group">
       <label for="day-off-limit">Day Off Limit (Per Month):</label>
       <input type="number" id="day-off-limit" min="0" />
-      <button id="update-limit-btn">Update Limit</button>
+      <button id="update-limit-btn" class="btn-primary">Update Limit</button>
+      <button id="undo-day-off-btn" class="btn-secondary">Undo Today's Day Off</button>
     </div>
 
+    <div id="day-off-info"></div>
     <hr/>
 
     <h3>Routine Stats</h3>
     <div>
       <label for="routine-stats-select">Select Routine:</label>
       <select id="routine-stats-select"></select>
-      <button id="show-routine-stats-btn">Show Stats</button>
+      <button id="show-routine-stats-btn" class="btn-primary">Show Stats</button>
     </div>
     <div id="routine-stats"></div>
   </div>
 
   <script src="app.js"></script>
   <script>
-    const dayOffInfo = document.getElementById('day-off-info');
     const dayOffLimitInput = document.getElementById('day-off-limit');
     const updateLimitBtn = document.getElementById('update-limit-btn');
-    
-    // Basic day-off info refresh
+    const dayOffInfo = document.getElementById('day-off-info');
+    const undoDayOffBtn = document.getElementById('undo-day-off-btn');
+
+    const routineStatsSelect = document.getElementById('routine-stats-select');
+    const showRoutineStatsBtn = document.getElementById('show-routine-stats-btn');
+    const routineStatsDiv = document.getElementById('routine-stats');
+
     function refreshDayOffInfo() {
       const settings = getSettings();
+      const currentMonth = getCurrentMonth();
+
+      const usedThisMonth = settings.dayOffRecords.filter(dateStr =>
+        dateStr.startsWith(currentMonth)
+      ).length;
+
       dayOffInfo.innerHTML = `
-        <p>Days off used this month: ${settings.dayOffUsed}</p>
-        <p>Day off limit: ${settings.dayOffLimit}</p>
+        <p>Days off used this month: <strong>${usedThisMonth}</strong></p>
+        <p>Day off limit: <strong>${settings.dayOffLimit}</strong></p>
         ${
-          settings.dayOffUsed >= settings.dayOffLimit
+          usedThisMonth >= settings.dayOffLimit
             ? '<p class="limit-warning">You have reached your limit!</p>'
             : ''
         }
@@ -52,7 +63,6 @@
       dayOffLimitInput.value = settings.dayOffLimit;
     }
 
-    // Update day-off limit
     updateLimitBtn.addEventListener('click', () => {
       const newLimit = parseInt(dayOffLimitInput.value, 10);
       if (isNaN(newLimit) || newLimit < 0) {
@@ -64,18 +74,24 @@
       alert("Day off limit updated!");
     });
 
-    // Initial load
+    // Undo today's day off
+    undoDayOffBtn.addEventListener('click', () => {
+      if (undoDayOff()) {
+        alert("Today's day off has been undone!");
+      } else {
+        alert("You haven't taken a day off today, or it's already undone.");
+      }
+      refreshDayOffInfo();
+    });
+
     refreshDayOffInfo();
 
     /********************************************
-     * Routine Stats (placeholder logic)
+     * Routine Stats
      ********************************************/
-    const routineStatsSelect = document.getElementById('routine-stats-select');
-    const showRoutineStatsBtn = document.getElementById('show-routine-stats-btn');
-    const routineStatsDiv = document.getElementById('routine-stats');
     const routines = getAllRoutines();
 
-    // Populate select
+    // Populate routine stats dropdown
     routines.forEach(r => {
       const opt = document.createElement('option');
       opt.value = r.id;
@@ -90,10 +106,19 @@
         routineStatsDiv.textContent = 'No routine found.';
         return;
       }
-      // Example stats display (actual logic can vary)
+      // Show basic stats including each habit's streak
+      let habitStatsHtml = '';
+      routine.habits.forEach(h => {
+        habitStatsHtml += `
+          <p>Habit: <strong>${h.title}</strong> | Time: ${h.time} | Streak: ${h.streak}</p>
+        `;
+      });
+
       routineStatsDiv.innerHTML = `
-        <p>Routine Name: <strong>${routine.name}</strong></p>
-        <p>Number of Habits: <strong>${routine.habits.length}</strong></p>
+        <p><strong>Routine Name:</strong> ${routine.name}</p>
+        <p><strong>Number of Habits:</strong> ${routine.habits.length}</p>
+        <p><strong>Habits & Streaks:</strong></p>
+        ${habitStatsHtml}
       `;
     });
   </script>
