@@ -13,6 +13,7 @@
   </div>
 
   <div class="container">
+    <!-- If user took a day off, we show a warning and disable routine loading -->
     <div id="day-off-warning" class="day-off-warning"></div>
 
     <div class="form-group">
@@ -33,7 +34,7 @@
     const habitsListDiv = document.getElementById("habits-list");
     const dayOffWarning = document.getElementById("day-off-warning");
 
-    // If day off is set for today, disable routine
+    // If day off is set for today, disable
     if (isDayOff()) {
       dayOffWarning.textContent = "You've taken a day off today! Routines are disabled.";
       loadBtn.disabled = true;
@@ -42,7 +43,7 @@
     // Populate the routine dropdown
     const routines = getAllRoutines();
     if (routines.length === 0) {
-      routineSelect.innerHTML = "<option value=''>No routines available</option>";
+      routineSelect.innerHTML = "<option>No routines available</option>";
     } else {
       routines.forEach(r => {
         const opt = document.createElement("option");
@@ -52,7 +53,6 @@
       });
     }
 
-    // Load Routine
     loadBtn.addEventListener("click", () => {
       habitsListDiv.innerHTML = "";
       const selectedId = routineSelect.value.trim();
@@ -69,13 +69,13 @@
         const checkbox = document.createElement("input");
         checkbox.type = "checkbox";
 
-        // If completed today, check
+        // If habit was completed today, pre-check it
         if (habit.lastCompletedDate === formatDate()) {
           checkbox.checked = true;
           label.classList.add("strikethrough");
         }
 
-        // Listen for changes
+        // On change => complete or uncomplete
         checkbox.addEventListener("change", () => {
           if (checkbox.checked) {
             label.classList.add("strikethrough");
@@ -86,11 +86,11 @@
           }
         });
 
-        const spanText = document.createElement("span");
-        spanText.textContent = `${habit.time} - ${habit.title}`;
+        const spanEl = document.createElement("span");
+        spanEl.textContent = `${habit.time} - ${habit.title}`;
 
         label.appendChild(checkbox);
-        label.appendChild(spanText);
+        label.appendChild(spanEl);
         habitsListDiv.appendChild(label);
       });
     });
