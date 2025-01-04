@@ -30,7 +30,6 @@ body {
   border-radius: 4px;
 }
 
-/* Form elements */
 .form-group {
   margin-bottom: 1rem;
 }
@@ -53,9 +52,9 @@ input[type="date"] {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  margin-bottom: 0.5rem;
 }
 
-/* Buttons */
 button {
   margin: 0.3rem 0;
   padding: 0.6rem 1rem;
@@ -81,7 +80,7 @@ button {
 }
 
 .btn-danger {
-  background-color: #EF4444; /* Red */
+  background-color: #EF4444;
   color: #fff;
 }
 .btn-danger:hover {
@@ -102,7 +101,6 @@ button {
   gap: 0.75rem;
 }
 
-/* Checkbox styling */
 .checkbox-label {
   display: flex;
   align-items: center;
@@ -118,37 +116,36 @@ button {
   color: #888;
 }
 
-/* Routine list items */
 .routine-item {
   display: flex;
   align-items: center;
   margin-bottom: 0.5rem;
 }
+
 .routine-item span {
   font-weight: 600;
 }
 
-/* Warnings */
 .limit-warning {
   color: red;
   font-weight: bold;
 }
+
 .day-off-warning {
   color: #b91c1c;
   font-weight: bold;
   margin-bottom: 1rem;
 }
 
-/* Quote of the day */
+/* Quote of day */
 .quote-of-day {
   font-style: italic;
   margin: 1rem 0 0.5rem 0;
-  padding: 0 0.5rem;
   font-size: 1.1rem;
   text-align: center;
 }
 
-/* Calendar History styling */
+/* Calendar history styling */
 .calendar-history-item {
   border: 1px solid #ccc;
   margin-bottom: 1rem;
@@ -161,12 +158,12 @@ button {
   font-weight: 600;
 }
 
-/* Responsive Text */
+/* Responsive text */
 h2, h3, h4, p {
   margin: 0.5rem 0;
 }
 
-/* Mobile Optimization */
+/* Mobile optimization */
 @media (max-width: 600px) {
   .container {
     padding: 0.5rem;
