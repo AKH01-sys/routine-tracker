@@ -37,7 +37,7 @@
 
     <hr />
 
-    <!-- Calendar View for Past Completions -->
+    <!-- Calendar View -->
     <h3>Calendar View</h3>
     <div class="form-group">
       <label for="calendar-date">Pick a Date:</label>
@@ -89,7 +89,7 @@
     undoDayOffBtn.addEventListener("click", () => {
       const success = undoDayOff();
       if (success) {
-        alert("Today's day off has been undone.");
+        alert("Today's day off has been undone!");
       } else {
         alert("No day off to undo for today.");
       }
@@ -103,7 +103,6 @@
     const showStatsBtn = document.getElementById("show-stats-btn");
     const routineStatsDiv = document.getElementById("routine-stats");
 
-    // Populate the select
     const allRoutines = getAllRoutines();
     if (allRoutines.length === 0) {
       routineStatsSelect.innerHTML = "<option>No routines</option>";
@@ -169,7 +168,6 @@
       for (let rId in routineMap) {
         const r = getRoutineById(rId);
         if (!r) continue;
-        const habitIndexes = routineMap[rId];
 
         const wrapper = document.createElement("div");
         wrapper.classList.add("calendar-history-item");
@@ -178,7 +176,7 @@
         title.textContent = `Routine: ${r.name}`;
         wrapper.appendChild(title);
 
-        habitIndexes.forEach(idx => {
+        routineMap[rId].forEach(idx => {
           const h = r.habits[idx];
           const p = document.createElement("p");
           p.textContent = `✅ ${h.title}`;
