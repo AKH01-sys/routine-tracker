@@ -13,7 +13,6 @@
   </div>
 
   <div class="container">
-    <!-- Create/Edit Form -->
     <form id="routine-form">
       <h3 id="form-title">Create New Routine</h3>
       <input type="hidden" id="routine-id" />
@@ -31,7 +30,6 @@
     </form>
     <hr />
 
-    <!-- Existing Routines -->
     <h3>Existing Routines</h3>
     <div id="routine-list"></div>
   </div>
@@ -47,10 +45,9 @@
     const routineList = document.getElementById("routine-list");
     const formTitle = document.getElementById("form-title");
 
-    // Start with one empty habit row
+    // Start with one row
     createHabitRow();
 
-    /********* Habit Row Creation *********/
     function createHabitRow(habit = { title: "", time: "" }) {
       const rowDiv = document.createElement("div");
       rowDiv.classList.add("form-group", "habit-row");
@@ -61,7 +58,6 @@
         <input type="time" name="habitTime" required value="${habit.time}" />
         <button type="button" class="btn-danger delete-habit-btn">X</button>
       `;
-      // Delete row
       rowDiv.querySelector(".delete-habit-btn").addEventListener("click", () => {
         rowDiv.remove();
       });
@@ -73,14 +69,12 @@
       createHabitRow();
     });
 
-    /********* Save Routine *********/
-    routineForm.addEventListener("submit", (e) => {
+    routineForm.addEventListener("submit", e => {
       e.preventDefault();
-      const routineId = routineIdInput.value;
+      const routineId = routineIdInput.value.trim();
       const routineName = routineNameInput.value.trim();
       if (!routineName) return;
 
-      // Gather habits
       const habitRows = habitsContainer.querySelectorAll(".habit-row");
       const habits = [];
       habitRows.forEach(row => {
@@ -95,7 +89,7 @@
       habits.sort((a, b) => a.time.localeCompare(b.time));
 
       if (!routineId) {
-        // Create new
+        // create new
         const success = addRoutine(routineName, habits);
         if (success) {
           alert("Routine created!");
@@ -105,7 +99,7 @@
           renderRoutines();
         }
       } else {
-        // Update existing
+        // update existing
         const success = updateRoutine(routineId, {
           name: routineName,
           habits: habits.map(h => ({
@@ -127,7 +121,6 @@
       }
     });
 
-    /********* Render Routine List *********/
     function renderRoutines() {
       routineList.innerHTML = "";
       const routines = getAllRoutines();
@@ -140,7 +133,6 @@
         div.classList.add("routine-item");
         div.innerHTML = `<span>${r.name}</span>`;
 
-        // Edit button
         const editBtn = document.createElement("button");
         editBtn.textContent = "Edit";
         editBtn.classList.add("btn-secondary");
@@ -148,7 +140,6 @@
         editBtn.addEventListener("click", () => loadRoutine(r.id));
         div.appendChild(editBtn);
 
-        // Delete button
         const delBtn = document.createElement("button");
         delBtn.textContent = "Delete";
         delBtn.classList.add("btn-danger");
@@ -174,12 +165,9 @@
       saveBtn.textContent = "Save Changes";
 
       habitsContainer.innerHTML = "";
-      r.habits.forEach(h => {
-        createHabitRow({ title: h.title, time: h.time });
-      });
+      r.habits.forEach(h => createHabitRow({ title: h.title, time: h.time }));
     }
 
-    // Initial rendering
     renderRoutines();
   </script>
 </body>
