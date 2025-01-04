@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
   <title>Stats</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <div class="header">
@@ -13,59 +13,56 @@
   </div>
 
   <div class="container">
+    <!-- Day Off Controls -->
     <div class="form-group">
       <label for="day-off-limit">Day Off Limit (Per Month):</label>
       <input type="number" id="day-off-limit" min="0" />
       <button id="update-limit-btn" class="btn-primary">Update Limit</button>
       <button id="undo-day-off-btn" class="btn-secondary">Undo Today's Day Off</button>
     </div>
-
     <div id="day-off-info"></div>
-    <hr/>
 
+    <hr />
+
+    <!-- Routine Stats -->
     <h3>Routine Stats</h3>
-    <div>
+    <div class="form-group">
       <label for="routine-stats-select">Select Routine:</label>
       <select id="routine-stats-select"></select>
-      <button id="show-routine-stats-btn" class="btn-primary">Show Stats</button>
+      <button id="show-stats-btn" class="btn-primary">Show Stats</button>
     </div>
     <div id="routine-stats"></div>
   </div>
 
   <script src="app.js"></script>
   <script>
-    const dayOffLimitInput = document.getElementById('day-off-limit');
-    const updateLimitBtn = document.getElementById('update-limit-btn');
-    const undoDayOffBtn = document.getElementById('undo-day-off-btn');
-    const dayOffInfo = document.getElementById('day-off-info');
-
-    const routineStatsSelect = document.getElementById('routine-stats-select');
-    const showRoutineStatsBtn = document.getElementById('show-routine-stats-btn');
-    const routineStatsDiv = document.getElementById('routine-stats');
+    /********** Day Off Info **********/
+    const dayOffLimitInput = document.getElementById("day-off-limit");
+    const updateLimitBtn = document.getElementById("update-limit-btn");
+    const undoDayOffBtn = document.getElementById("undo-day-off-btn");
+    const dayOffInfoDiv = document.getElementById("day-off-info");
 
     function refreshDayOffInfo() {
       const settings = getSettings();
       const currentMonth = getCurrentMonth();
-      // Count how many day-offs this month
       const usedThisMonth = settings.dayOffRecords.filter(d => d.startsWith(currentMonth)).length;
 
-      let warning = '';
+      let warning = "";
       if (usedThisMonth > settings.dayOffLimit) {
-        warning = '<p class="limit-warning">You have exceeded your monthly day-off limit!</p>';
+        warning = "<p class='limit-warning'>You have exceeded your day-off limit!</p>";
       } else if (usedThisMonth === settings.dayOffLimit) {
-        warning = '<p class="limit-warning">You have reached your monthly day-off limit!</p>';
+        warning = "<p class='limit-warning'>You have reached your day-off limit.</p>";
       }
 
-      dayOffInfo.innerHTML = `
+      dayOffInfoDiv.innerHTML = `
         <p>Days off used this month: <strong>${usedThisMonth}</strong></p>
         <p>Day off limit: <strong>${settings.dayOffLimit}</strong></p>
         ${warning}
       `;
-
       dayOffLimitInput.value = settings.dayOffLimit;
     }
 
-    updateLimitBtn.addEventListener('click', () => {
+    updateLimitBtn.addEventListener("click", () => {
       const newLimit = parseInt(dayOffLimitInput.value, 10);
       if (isNaN(newLimit) || newLimit < 0) {
         alert("Invalid limit!");
@@ -76,55 +73,56 @@
       alert("Day off limit updated!");
     });
 
-    // Undo today's day off
-    undoDayOffBtn.addEventListener('click', () => {
-      if (undoDayOff()) {
-        alert("Today's day off has been undone!");
+    undoDayOffBtn.addEventListener("click", () => {
+      const success = undoDayOff();
+      if (success) {
+        alert("Today's day off has been undone.");
       } else {
-        alert("You haven't taken a day off today (or it's already undone).");
+        alert("No day off to undo for today.");
       }
       refreshDayOffInfo();
     });
 
     refreshDayOffInfo();
 
-    /********************************************
-     * Routine Stats
-     ********************************************/
-    const routines = getAllRoutines();
+    /********** Routine Stats **********/
+    const routineStatsSelect = document.getElementById("routine-stats-select");
+    const showStatsBtn = document.getElementById("show-stats-btn");
+    const routineStatsDiv = document.getElementById("routine-stats");
 
-    // Populate the dropdown
-    routines.forEach(r => {
-      const opt = document.createElement('option');
-      opt.value = r.id;
-      opt.textContent = r.name;
-      routineStatsSelect.appendChild(opt);
-    });
+    // Populate routine select
+    const allRoutines = getAllRoutines();
+    if (allRoutines.length === 0) {
+      routineStatsSelect.innerHTML = "<option>No routines</option>";
+    } else {
+      allRoutines.forEach(r => {
+        const opt = document.createElement("option");
+        opt.value = r.id;
+        opt.textContent = r.name;
+        routineStatsSelect.appendChild(opt);
+      });
+    }
 
-    showRoutineStatsBtn.addEventListener('click', () => {
-      routineStatsDiv.innerHTML = '';
+    showStatsBtn.addEventListener("click", () => {
+      routineStatsDiv.innerHTML = "";
       const selectedId = routineStatsSelect.value;
       const routine = getRoutineById(selectedId);
       if (!routine) {
-        routineStatsDiv.textContent = 'No routine found.';
+        routineStatsDiv.textContent = "No routine found.";
         return;
       }
 
-      // Build HTML for each habit's streak
-      let habitStatsHtml = '';
+      let habitStatsHtml = "";
       routine.habits.forEach(h => {
-        habitStatsHtml += `
-          <p>
-            Habit: <strong>${h.title}</strong> | Time: ${h.time} |
-            Streak: <strong>${h.streak}</strong>
-          </p>
-        `;
+        habitStatsHtml += `<p>Habit: <strong>${h.title}</strong>, Time: ${h.time}, Streak: <strong>${h.streak}</strong></p>`;
       });
 
       routineStatsDiv.innerHTML = `
         <p><strong>Routine Name:</strong> ${routine.name}</p>
         <p><strong>Number of Habits:</strong> ${routine.habits.length}</p>
-        <div><strong>Habits & Streaks:</strong><br>${habitStatsHtml}</div>
+        <hr/>
+        <h4>Habits & Streaks</h4>
+        ${habitStatsHtml}
       `;
     });
   </script>
