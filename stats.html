@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1.0" />
-  <title>Stats</title>
+  <title>Jaiveek Hegde Routine - Stats</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -24,7 +24,7 @@
 
     <hr />
 
-    <!-- Routine Stats -->
+    <!-- Routine Stats (Hide habit time, show only streak) -->
     <h3>Routine Stats</h3>
     <div class="form-group">
       <label for="routine-stats-select">Select Routine:</label>
@@ -32,6 +32,17 @@
       <button id="show-stats-btn" class="btn-primary">Show Stats</button>
     </div>
     <div id="routine-stats"></div>
+
+    <hr />
+
+    <!-- Calendar View for Past Completions -->
+    <h3>Calendar View</h3>
+    <div class="form-group">
+      <label for="calendar-date">Pick a Date:</label>
+      <input type="date" id="calendar-date" />
+      <button id="view-history-btn" class="btn-primary">View History</button>
+    </div>
+    <div id="calendar-history"></div>
   </div>
 
   <script src="app.js"></script>
@@ -85,7 +96,7 @@
 
     refreshDayOffInfo();
 
-    /********** Routine Stats **********/
+    /********** Routine Stats (Hide Time, Show Only Title & Streak) **********/
     const routineStatsSelect = document.getElementById("routine-stats-select");
     const showStatsBtn = document.getElementById("show-stats-btn");
     const routineStatsDiv = document.getElementById("routine-stats");
@@ -112,18 +123,71 @@
         return;
       }
 
+      // Show only habit title & streak
       let habitStatsHtml = "";
       routine.habits.forEach(h => {
-        habitStatsHtml += `<p>Habit: <strong>${h.title}</strong>, Time: ${h.time}, Streak: <strong>${h.streak}</strong></p>`;
+        habitStatsHtml += `
+          <p>
+            Habit: <strong>${h.title}</strong>, 
+            Streak: <strong>${h.streak}</strong>
+          </p>`;
       });
 
       routineStatsDiv.innerHTML = `
         <p><strong>Routine Name:</strong> ${routine.name}</p>
         <p><strong>Number of Habits:</strong> ${routine.habits.length}</p>
         <hr/>
-        <h4>Habits & Streaks</h4>
+        <h4>Habits & Streaks (Time Hidden)</h4>
         ${habitStatsHtml}
       `;
+    });
+
+    /********** Calendar View **********/
+    const calendarDateInput = document.getElementById("calendar-date");
+    const viewHistoryBtn = document.getElementById("view-history-btn");
+    const calendarHistoryDiv = document.getElementById("calendar-history");
+
+    viewHistoryBtn.addEventListener("click", () => {
+      calendarHistoryDiv.innerHTML = "";
+      const selectedDate = calendarDateInput.value;
+      if (!selectedDate) {
+        calendarHistoryDiv.textContent = "Please pick a date.";
+        return;
+      }
+      // Retrieve what was completed that day
+      const completions = getCompletionsByDate(selectedDate);
+      if (completions.length === 0) {
+        calendarHistoryDiv.textContent = "No habits completed on that date.";
+        return;
+      }
+
+      // Group by routine
+      const routineMap = {};
+      completions.forEach(c => {
+        if (!routineMap[c.routineId]) routineMap[c.routineId] = [];
+        routineMap[c.routineId].push(c.habitIndex);
+      });
+
+      // Build display
+      for (let rId in routineMap) {
+        const r = getRoutineById(rId);
+        if (!r) continue;
+        const habitIndexes = routineMap[rId];
+        const wrapper = document.createElement("div");
+        wrapper.classList.add("calendar-history-item");
+        const title = document.createElement("h4");
+        title.textContent = `Routine: ${r.name}`;
+        wrapper.appendChild(title);
+
+        habitIndexes.forEach(idx => {
+          const h = r.habits[idx];
+          const p = document.createElement("p");
+          p.textContent = `Habit Completed: ${h.title}`;
+          wrapper.appendChild(p);
+        });
+
+        calendarHistoryDiv.appendChild(wrapper);
+      }
     });
   </script>
 </body>
