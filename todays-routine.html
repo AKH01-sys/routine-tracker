@@ -32,9 +32,9 @@
     const dayOffWarning = document.getElementById('day-off-warning');
     const routines = getAllRoutines();
 
-    // Check if today is a day off
+    // If user took a day off today, disable loading routine
     if (isDayOff()) {
-      dayOffWarning.innerHTML = "You've taken a day off today! Routine is disabled.";
+      dayOffWarning.textContent = "You've taken a day off today. Routine is disabled!";
       loadRoutineBtn.disabled = true;
     }
 
@@ -55,16 +55,14 @@
         return;
       }
 
-      // Display each habit
       selectedRoutine.habits.forEach((habit, habitIndex) => {
         const label = document.createElement('label');
         label.className = 'checkbox-label';
 
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
-        checkbox.id = `habit-${habitIndex}`;
 
-        // If the user checks this box, mark as complete -> update streak
+        // Mark as complete => update streak if not done yet
         checkbox.addEventListener('change', () => {
           const spanText = label.querySelector('span');
           if (checkbox.checked) {
@@ -72,11 +70,11 @@
             completeHabit(selectedRoutine.id, habitIndex);
           } else {
             spanText.classList.remove('strikethrough');
-            // Not implementing "uncomplete" logic for streak, but you could do so
+            // Not implementing "un-complete" logic for streak
           }
         });
 
-        // Visually indicate if it was already completed today
+        // If habit was already completed today, check it
         if (habit.lastCompletedDate === formatDate()) {
           checkbox.checked = true;
           checkbox.dispatchEvent(new Event('change'));
