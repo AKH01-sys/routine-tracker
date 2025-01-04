@@ -22,6 +22,9 @@ const ROUTINES_KEY = "routines";
 const SETTINGS_KEY = "settings";
 const COMPLETIONS_KEY = "completions";
 
+/**
+ * Initialize the app data
+ */
 function initAppData() {
   let routines = getData(ROUTINES_KEY, []);
   let settings = getData(SETTINGS_KEY, {
@@ -67,21 +70,28 @@ function updateSettings(newSettings) {
   setData(SETTINGS_KEY, settings);
 }
 
-/** canTakeDayOff:
- *  - not already day off for today
- *  - not over dayOffLimit for current month
+/**
+ * canTakeDayOff:
+ * 1. Not already on day-off for today
+ * 2. Not over the monthly dayOffLimit
  */
 function canTakeDayOff() {
   const settings = getSettings();
   const todayStr = formatDate();
+  // If today's date is in dayOffRecords, can't take day off again
   if (settings.dayOffRecords.includes(todayStr)) {
     return false;
   }
   const currentMonth = getCurrentMonth();
+  // Count how many day-offs are used in the current month
   const usedThisMonth = settings.dayOffRecords.filter(d => d.startsWith(currentMonth)).length;
   return usedThisMonth < settings.dayOffLimit;
 }
 
+/** 
+ * takeDayOff:
+ * - Add today's date to dayOffRecords if not already present
+ */
 function takeDayOff() {
   const settings = getSettings();
   const todayStr = formatDate();
@@ -93,6 +103,11 @@ function takeDayOff() {
   return true;
 }
 
+/**
+ * undoDayOff:
+ * - Removes today's date from dayOffRecords if present.
+ * - Allows re-taking day off the same day if undone.
+ */
 function undoDayOff() {
   const settings = getSettings();
   const todayStr = formatDate();
@@ -105,6 +120,10 @@ function undoDayOff() {
   return false;
 }
 
+/** 
+ * isDayOff:
+ *  - Check if the date is in dayOffRecords
+ */
 function isDayOff(dateStr = formatDate()) {
   const settings = getSettings();
   return settings.dayOffRecords.includes(dateStr);
@@ -127,7 +146,6 @@ function generateRoutineId() {
 
 function addRoutine(name, habits) {
   const routines = getAllRoutines();
-  // Duplicate name check
   const dup = routines.find(r => r.name.toLowerCase() === name.toLowerCase());
   if (dup) {
     alert("A routine with this name already exists!");
@@ -152,7 +170,7 @@ function updateRoutine(routineId, updatedObj) {
   const idx = routines.findIndex(r => r.id === routineId);
   if (idx < 0) return false;
 
-  // if changing name, check duplicates
+  // If name changed, check duplicates
   if (
     updatedObj.name &&
     updatedObj.name.toLowerCase() !== routines[idx].name.toLowerCase()
@@ -189,9 +207,11 @@ function completeHabit(routineId, habitIndex) {
   const habit = routine.habits[habitIndex];
   const todayStr = formatDate();
 
+  // If already completed today, do nothing
   if (habit.lastCompletedDate === todayStr) {
-    return; // already done
+    return;
   }
+
   // Streak logic
   if (!habit.lastCompletedDate) {
     // first time
@@ -204,12 +224,12 @@ function completeHabit(routineId, habitIndex) {
     if (diffDays === 1) {
       habit.streak += 1;
     } else if (diffDays > 1) {
+      // Check if all missed days were day offs
       let allDayOff = true;
       for (let i = 1; i < diffDays; i++) {
         const checkDate = new Date(lastDone);
         checkDate.setDate(lastDone.getDate() + i);
-        const checkStr = formatDate(checkDate);
-        if (!isDayOff(checkStr)) {
+        if (!isDayOff(formatDate(checkDate))) {
           allDayOff = false;
           break;
         }
@@ -219,11 +239,14 @@ function completeHabit(routineId, habitIndex) {
   }
   habit.lastCompletedDate = todayStr;
 
+  // Save updated routine
   setData(ROUTINES_KEY, routines);
 
-  // also log in COMPLETIONS_KEY
+  // Log in COMPLETIONS_KEY
   let completions = getData(COMPLETIONS_KEY, {});
-  if (!completions[todayStr]) completions[todayStr] = [];
+  if (!completions[todayStr]) {
+    completions[todayStr] = [];
+  }
   const alreadyLogged = completions[todayStr].some(
     c => c.routineId === routineId && c.habitIndex === habitIndex
   );
@@ -244,7 +267,7 @@ function uncompleteHabit(routineId, habitIndex, sameDay = true) {
   const habit = routine.habits[habitIndex];
   const todayStr = formatDate();
 
-  // remove from completions
+  // Remove from completions
   let completions = getData(COMPLETIONS_KEY, {});
   if (completions[todayStr]) {
     completions[todayStr] = completions[todayStr].filter(
@@ -253,7 +276,7 @@ function uncompleteHabit(routineId, habitIndex, sameDay = true) {
     setData(COMPLETIONS_KEY, completions);
   }
 
-  // revert if undone the same day
+  // Revert streak if undone the same day
   if (sameDay && habit.lastCompletedDate === todayStr) {
     habit.lastCompletedDate = "";
     habit.streak = Math.max(habit.streak - 1, 0);
@@ -261,7 +284,9 @@ function uncompleteHabit(routineId, habitIndex, sameDay = true) {
   }
 }
 
-/** fetch completions for date */
+/** 
+ * getCompletionsByDate => returns array of { routineId, habitIndex } for the date
+ */
 function getCompletionsByDate(dateStr) {
   const completions = getData(COMPLETIONS_KEY, {});
   return completions[dateStr] || [];
@@ -273,6 +298,7 @@ function getCompletionsByDate(dateStr) {
 function purgeOldDayOffRecords() {
   const settings = getSettings();
   const currentMonth = getCurrentMonth();
+  // Remove day-off records that are from older months
   settings.dayOffRecords = settings.dayOffRecords.filter(d => d.startsWith(currentMonth));
   setData(SETTINGS_KEY, settings);
 }
