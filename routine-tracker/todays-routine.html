@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Today's Routine</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="header">
+    <h2>Today's Routine</h2>
+  </div>
+
+  <div class="container">
+    <div class="form-group">
+      <label for="routine-select">Choose a routine to follow:</label>
+      <select id="routine-select"></select>
+      <button id="load-routine-btn">Load Routine</button>
+    </div>
+
+    <div id="habits-list"></div>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    const routineSelect = document.getElementById('routine-select');
+    const loadRoutineBtn = document.getElementById('load-routine-btn');
+    const habitsListDiv = document.getElementById('habits-list');
+
+    const routines = getAllRoutines();
+
+    routines.forEach((r, index) => {
+      const opt = document.createElement('option');
+      opt.value = index;
+      opt.textContent = r.name;
+      routineSelect.appendChild(opt);
+    });
+
+    loadRoutineBtn.addEventListener('click', () => {
+      habitsListDiv.innerHTML = '';
+      const selectedIndex = parseInt(routineSelect.value, 10);
+      const selectedRoutine = routines[selectedIndex];
+
+      selectedRoutine.habits.forEach((habit, habitIndex) => {
+        const label = document.createElement('label');
+        label.className = 'checkbox-label';
+
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.addEventListener('change', () => {
+          const spanText = label.querySelector('span');
+          if (checkbox.checked) {
+            spanText.classList.add('strikethrough');
+            markHabitComplete(selectedIndex, habitIndex, true);
+          } else {
+            spanText.classList.remove('strikethrough');
+            markHabitComplete(selectedIndex, habitIndex, false);
+          }
+        });
+
+        const spanText = document.createElement('span');
+        spanText.textContent = `${habit.time} - ${habit.title}`;
+
+        label.appendChild(checkbox);
+        label.appendChild(spanText);
+        habitsListDiv.appendChild(label);
+      });
+    });
+  </script>
+</body>
+</html>
