@@ -26,8 +26,13 @@
 
       <div id="habits-container"></div>
 
-      <button type="button" class="btn-secondary" id="add-habit-btn">Add Habit</button><br><br>
-      <button type="submit" class="btn-primary" id="save-btn">Save Routine</button>
+      <button type="button" class="btn-secondary" id="add-habit-btn">
+        Add Habit
+      </button>
+      <br><br>
+      <button type="submit" class="btn-primary" id="save-btn">
+        Save Routine
+      </button>
     </form>
     <hr/>
 
@@ -38,7 +43,6 @@
 
   <script src="app.js"></script>
   <script>
-    // 1. Form Elements
     const routineForm = document.getElementById('routine-form');
     const formTitle = document.getElementById('form-title');
     const routineIdInput = document.getElementById('routine-id');
@@ -46,37 +50,40 @@
     const habitsContainer = document.getElementById('habits-container');
     const addHabitBtn = document.getElementById('add-habit-btn');
     const saveBtn = document.getElementById('save-btn');
-    // 2. Routine List
     const routineListDiv = document.getElementById('routine-list');
 
     /********************************************
-     * Habit Row Functions
+     * Habit Rows
      ********************************************/
     function createHabitRow(habit = { title: '', time: '' }) {
-      const habitDiv = document.createElement('div');
-      habitDiv.classList.add('form-group', 'habit-row');
-
-      // Each row needs a delete button
-      habitDiv.innerHTML = `
+      const rowDiv = document.createElement('div');
+      rowDiv.classList.add('form-group', 'habit-row');
+      rowDiv.innerHTML = `
         <label>Habit Title:</label>
-        <input type="text" name="habitTitle" required value="${habit.title}"/>
+        <input type="text" name="habitTitle" required value="${habit.title}" />
         <label>Time:</label>
-        <input type="time" name="habitTime" required value="${habit.time}"/>
+        <input type="time" name="habitTime" required value="${habit.time}" />
         <button type="button" class="btn-danger delete-habit-btn">X</button>
       `;
 
-      // Attach a handler to remove this row
-      const deleteBtn = habitDiv.querySelector('.delete-habit-btn');
+      const deleteBtn = rowDiv.querySelector('.delete-habit-btn');
       deleteBtn.addEventListener('click', () => {
-        habitDiv.remove();
+        rowDiv.remove();
       });
 
-      return habitDiv;
+      return rowDiv;
     }
 
     function addHabitRow(habit) {
       habitsContainer.appendChild(createHabitRow(habit));
     }
+
+    addHabitBtn.addEventListener('click', () => {
+      addHabitRow({ title: '', time: '' });
+    });
+
+    // Start with a single empty row for new routines
+    addHabitRow();
 
     /********************************************
      * Form Submission
@@ -97,11 +104,11 @@
         }
       });
 
-      // Sort by time
+      // Sort habits by time
       habits.sort((a, b) => a.time.localeCompare(b.time));
 
       if (!routineId) {
-        // Create new
+        // CREATE new routine
         const success = addRoutine(routineName, habits);
         if (success) {
           alert("Routine created successfully!");
@@ -111,7 +118,7 @@
           renderRoutines();
         }
       } else {
-        // Update existing
+        // UPDATE existing routine
         const success = updateRoutine(routineId, {
           name: routineName,
           habits: habits.map(h => ({
@@ -123,18 +130,18 @@
         if (success) {
           alert("Routine updated successfully!");
           routineForm.reset();
-          habitsContainer.innerHTML = '';
-          addHabitRow();
           routineIdInput.value = '';
           formTitle.textContent = 'Create New Routine';
           saveBtn.textContent = 'Save Routine';
+          habitsContainer.innerHTML = '';
+          addHabitRow();
           renderRoutines();
         }
       }
     });
 
     /********************************************
-     * Render & Manage Routines
+     * Manage Routines
      ********************************************/
     function renderRoutines() {
       routineListDiv.innerHTML = '';
@@ -174,7 +181,6 @@
         wrapper.appendChild(titleSpan);
         wrapper.appendChild(editBtn);
         wrapper.appendChild(deleteBtn);
-
         routineListDiv.appendChild(wrapper);
       });
     }
@@ -183,11 +189,11 @@
       const routine = getRoutineById(routineId);
       if (!routine) return;
 
+      // Populate form
       routineIdInput.value = routine.id;
       routineNameInput.value = routine.name;
       habitsContainer.innerHTML = '';
       routine.habits.forEach(h => {
-        // Load existing title/time but reset streak
         addHabitRow({ title: h.title, time: h.time });
       });
 
@@ -195,9 +201,8 @@
       saveBtn.textContent = 'Save Changes';
     }
 
-    // Initialize
+    // Initial rendering
     renderRoutines();
-    addHabitRow(); // Start with 1 row for a new routine
   </script>
 </body>
 </html>
