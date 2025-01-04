@@ -1,3 +1,4 @@
+/* Global reset / base */
 body {
   margin: 0;
   padding: 0;
@@ -7,10 +8,18 @@ body {
 }
 
 .header {
-  text-align: center;
+  position: relative; /* So we can place the back button */
+  display: flex;
+  align-items: center;
+  justify-content: center;
   padding: 1rem;
   background-color: #ffffff;
   border-bottom: 1px solid #ccc;
+}
+
+.header .back-btn {
+  position: absolute;
+  left: 1rem;
 }
 
 .container {
@@ -21,8 +30,73 @@ body {
   border-radius: 4px;
 }
 
+/* Buttons - color-coded */
+button {
+  margin: 0.3rem 0;
+  padding: 0.65rem 1rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+/* Color classes for different actions */
+.btn-primary {
+  background-color: #3B82F6; /* Blue */
+  color: #fff;
+}
+.btn-primary:hover {
+  background-color: #2563EB;
+}
+
+.btn-secondary {
+  background-color: #6366F1; /* Indigo */
+  color: #fff;
+}
+.btn-secondary:hover {
+  background-color: #4F46E5;
+}
+
+.btn-danger {
+  background-color: #EF4444; /* Red */
+  color: #fff;
+}
+.btn-danger:hover {
+  background-color: #DC2626;
+}
+
+.btn-success {
+  background-color: #4CAF50; /* Green */
+  color: #fff;
+}
+.btn-success:hover {
+  background-color: #45A049;
+}
+
+/* Form styling */
 .form-group {
   margin-bottom: 1rem;
+}
+
+label {
+  display: inline-block;
+  margin-right: 0.5rem;
+}
+
+input[type="text"],
+input[type="time"],
+input[type="number"] {
+  padding: 0.4rem;
+  margin-right: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.habit-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
 }
 
 .routine-item {
@@ -33,21 +107,6 @@ body {
 
 .routine-item span {
   font-weight: 500;
-}
-
-button {
-  display: inline-block;
-  margin: 0.5rem 0;
-  padding: 0.75rem 1rem;
-  background-color: #4CAF50;
-  color: #fff;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-button:hover {
-  background-color: #45A049;
 }
 
 .checkbox-label {
@@ -68,4 +127,25 @@ button:hover {
 .limit-warning {
   color: red;
   font-weight: bold;
+}
+
+.day-off-warning {
+  color: #b91c1c;
+  font-weight: bold;
+  margin-bottom: 1rem;
+}
+
+/* Navigation buttons: vertical by default */
+.nav-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* Larger screens: arrange nav buttons horizontally */
+@media (min-width: 768px) {
+  .nav-buttons {
+    flex-direction: row;
+    justify-content: space-around;
+  }
 }
