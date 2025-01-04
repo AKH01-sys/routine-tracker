@@ -17,7 +17,9 @@
 
     <div class="form-group">
       <label for="routine-select">Choose a routine:</label>
-      <select id="routine-select"></select>
+      <select id="routine-select">
+        <option value="">-- Select a Routine --</option>
+      </select>
       <button id="load-btn" class="btn-primary">Load Routine</button>
     </div>
 
@@ -31,13 +33,13 @@
     const habitsListDiv = document.getElementById("habits-list");
     const dayOffWarning = document.getElementById("day-off-warning");
 
-    // Disable if user is on day off
+    // Disable routine loading if today is a day off
     if (isDayOff()) {
       dayOffWarning.textContent = "You've taken a day off today! Routines are disabled.";
       loadBtn.disabled = true;
     }
 
-    // Populate the select
+    // Populate the dropdown with routines
     const routines = getAllRoutines();
     if (routines.length === 0) {
       routineSelect.innerHTML = "<option value=''>No routines found</option>";
@@ -50,7 +52,7 @@
       });
     }
 
-    // Load routine
+    // Load selected routine and display its habits
     loadBtn.addEventListener("click", () => {
       habitsListDiv.innerHTML = "";
       const selectedId = routineSelect.value;
@@ -67,22 +69,23 @@
         const checkbox = document.createElement("input");
         checkbox.type = "checkbox";
 
-        // If user checks -> complete habit
+        // Check if habit was completed today
+        if (habit.lastCompletedDate === formatDate()) {
+          checkbox.checked = true;
+          label.classList.add("strikethrough");
+        }
+
+        // Handle checkbox changes
         checkbox.addEventListener("change", () => {
+          const spanText = label.querySelector("span");
           if (checkbox.checked) {
             spanText.classList.add("strikethrough");
             completeHabit(routine.id, idx);
           } else {
             spanText.classList.remove("strikethrough");
-            // optionally handle if user unchecks
+            uncompleteHabit(routine.id, idx);
           }
         });
-
-        // If habit completed today, pre-check
-        if (habit.lastCompletedDate === formatDate()) {
-          checkbox.checked = true;
-          checkbox.dispatchEvent(new Event("change"));
-        }
 
         const spanText = document.createElement("span");
         spanText.textContent = `${habit.time} - ${habit.title}`;
