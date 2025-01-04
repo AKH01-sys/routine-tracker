@@ -1,21 +1,24 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Today's Routine</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div class="header">
+    <button class="btn-secondary back-btn" onclick="window.history.back()">← Back</button>
     <h2>Today's Routine</h2>
   </div>
 
   <div class="container">
+    <div id="day-off-warning" class="day-off-warning"></div>
+
     <div class="form-group">
       <label for="routine-select">Choose a routine to follow:</label>
       <select id="routine-select"></select>
-      <button id="load-routine-btn">Load Routine</button>
+      <button id="load-routine-btn" class="btn-primary">Load Routine</button>
     </div>
 
     <div id="habits-list"></div>
@@ -26,21 +29,22 @@
     const routineSelect = document.getElementById('routine-select');
     const loadRoutineBtn = document.getElementById('load-routine-btn');
     const habitsListDiv = document.getElementById('habits-list');
+    const dayOffWarning = document.getElementById('day-off-warning');
     const routines = getAllRoutines();
 
-    // Populate dropdown
-    routines.forEach((r) => {
+    // Check if today is a day off
+    if (isDayOff()) {
+      dayOffWarning.innerHTML = "You've taken a day off today! Routine is disabled.";
+      loadRoutineBtn.disabled = true;
+    }
+
+    // Populate routine dropdown
+    routines.forEach(r => {
       const opt = document.createElement('option');
       opt.value = r.id;
       opt.textContent = r.name;
       routineSelect.appendChild(opt);
     });
-
-    // (Optional) Mark habit complete in localStorage if needed
-    function markHabitComplete(routineId, habitIndex, isComplete) {
-      // Example: you might store completedHabits in localStorage
-      // For brevity, not fully implemented here
-    }
 
     loadRoutineBtn.addEventListener('click', () => {
       habitsListDiv.innerHTML = '';
@@ -51,6 +55,7 @@
         return;
       }
 
+      // Display each habit
       selectedRoutine.habits.forEach((habit, habitIndex) => {
         const label = document.createElement('label');
         label.className = 'checkbox-label';
@@ -58,12 +63,24 @@
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
         checkbox.id = `habit-${habitIndex}`;
-        
-        // Toggle strikethrough
+
+        // If the user checks this box, mark as complete -> update streak
         checkbox.addEventListener('change', () => {
-          spanText.classList.toggle('strikethrough', checkbox.checked);
-          markHabitComplete(selectedRoutine.id, habitIndex, checkbox.checked);
+          const spanText = label.querySelector('span');
+          if (checkbox.checked) {
+            spanText.classList.add('strikethrough');
+            completeHabit(selectedRoutine.id, habitIndex);
+          } else {
+            spanText.classList.remove('strikethrough');
+            // Not implementing "uncomplete" logic for streak, but you could do so
+          }
         });
+
+        // Visually indicate if it was already completed today
+        if (habit.lastCompletedDate === formatDate()) {
+          checkbox.checked = true;
+          checkbox.dispatchEvent(new Event('change'));
+        }
 
         const spanText = document.createElement('span');
         spanText.textContent = `${habit.time} - ${habit.title}`;
