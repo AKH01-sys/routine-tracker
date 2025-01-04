@@ -12,11 +12,10 @@
   </div>
 
   <div class="container">
-    <!-- Date, Live Clock, and Daily Quote -->
+    <!-- Date & Live Clock -->
     <div style="text-align: center;">
       <h3 id="current-date"></h3>
       <h4 id="live-clock"></h4>
-      <p id="quote-of-day" class="quote-of-day"></p>
     </div>
 
     <!-- Navigation Buttons -->
@@ -27,23 +26,20 @@
       <button class="btn-primary" onclick="location.href='todays-routine.html'">
         Today's Routine
       </button>
-      <button class="btn-secondary" id="take-day-off-btn">
-        Take a Day Off
-      </button>
+      <button class="btn-secondary" id="take-day-off-btn">Take a Day Off</button>
       <button class="btn-secondary" onclick="location.href='stats.html'">
         Stats
       </button>
     </div>
   </div>
 
-  <!-- Ensure app.js is loaded so the day-off functions & quotes are available -->
   <script src="app.js"></script>
   <script>
-    // Display Current Date
+    // Show date
     const dateEl = document.getElementById("current-date");
     dateEl.textContent = new Date().toDateString();
 
-    // Live Clock
+    // Live clock
     const clockEl = document.getElementById("live-clock");
     function updateClock() {
       const now = new Date();
@@ -55,29 +51,23 @@
     setInterval(updateClock, 1000);
     updateClock();
 
-    // Show daily quote
-    const quoteEl = document.getElementById("quote-of-day");
-    const todaysQuote = getTodaysQuote();
-    quoteEl.textContent = todaysQuote || "Keep pushing forward!";
-
-    // Old-Style Day Off Logic
+    // Take a Day Off - old style
     const takeDayOffBtn = document.getElementById("take-day-off-btn");
     takeDayOffBtn.addEventListener("click", () => {
       if (!confirm("Are you sure you want to take a day off today?")) {
         return;
       }
-
       if (canTakeDayOff()) {
         const success = takeDayOff();
         if (success) {
           alert("Enjoy your day off!");
-          // Optionally disable the button so user can't re-click
+          // Optionally disable so user can't click again
           takeDayOffBtn.disabled = true;
         } else {
-          alert("Could not record your day off. Possibly a localStorage error.");
+          alert("Could not record your day off. Check localStorage or code logic.");
         }
       } else {
-        alert("Day off limit reached or you already took a day off today.");
+        alert("Day off limit reached, or you already took a day off today.");
       }
     });
   </script>
