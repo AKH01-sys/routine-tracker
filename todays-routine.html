@@ -15,6 +15,7 @@
   <div class="container">
     <div id="day-off-warning" class="day-off-warning"></div>
 
+    <!-- Routine Selection -->
     <div class="form-group">
       <label for="routine-select">Choose a routine:</label>
       <select id="routine-select">
@@ -23,26 +24,45 @@
       <button id="load-btn" class="btn-primary">Load Routine</button>
     </div>
 
+    <!-- Habit List -->
     <div id="habits-list"></div>
+
+    <hr />
+
+    <!-- Notes Section -->
+    <h3>Permanent Notes</h3>
+    <textarea 
+      id="permanent-notes" 
+      class="notes-textarea" 
+      placeholder="Write anything that persists across all days...">
+    </textarea>
+
+    <h3>Daily Notes</h3>
+    <textarea 
+      id="daily-notes" 
+      class="notes-textarea" 
+      placeholder="Write notes specific to today...">
+    </textarea>
   </div>
 
   <script src="app.js"></script>
   <script>
+    /*-------------------------------------
+      Existing Routine-Loading Logic
+    -------------------------------------*/
     const routineSelect = document.getElementById("routine-select");
     const loadBtn = document.getElementById("load-btn");
     const habitsListDiv = document.getElementById("habits-list");
     const dayOffWarning = document.getElementById("day-off-warning");
 
-    // If day off is set for today, disable loading routines
     if (isDayOff()) {
       dayOffWarning.textContent = "You've taken a day off today! Routines are disabled.";
       loadBtn.disabled = true;
     }
 
-    // Populate routine dropdown
     const routines = getAllRoutines();
     if (routines.length === 0) {
-      routineSelect.innerHTML = "<option>No routines found</option>";
+      routineSelect.innerHTML = "<option>No routines available</option>";
     } else {
       routines.forEach(r => {
         const opt = document.createElement("option");
@@ -52,7 +72,6 @@
       });
     }
 
-    // Load the selected routine
     loadBtn.addEventListener("click", () => {
       habitsListDiv.innerHTML = "";
       const selectedId = routineSelect.value.trim();
@@ -69,30 +88,51 @@
         const checkbox = document.createElement("input");
         checkbox.type = "checkbox";
 
-        // If completed today, pre-check
+        // If habit was completed today, pre-check
         if (habit.lastCompletedDate === formatDate()) {
           checkbox.checked = true;
           label.classList.add("strikethrough");
         }
 
-        // On check/uncheck
         checkbox.addEventListener("change", () => {
           if (checkbox.checked) {
             label.classList.add("strikethrough");
             completeHabit(routine.id, idx);
           } else {
             label.classList.remove("strikethrough");
-            uncompleteHabit(routine.id, idx, true); 
+            uncompleteHabit(routine.id, idx, true);
           }
         });
 
-        const spanText = document.createElement("span");
-        spanText.textContent = `${habit.time} - ${habit.title}`;
+        const spanEl = document.createElement("span");
+        spanEl.textContent = `${habit.time} - ${habit.title}`;
 
         label.appendChild(checkbox);
-        label.appendChild(spanText);
+        label.appendChild(spanEl);
         habitsListDiv.appendChild(label);
       });
+    });
+
+    /*-------------------------------------
+      New Notes Logic
+    -------------------------------------*/
+    const permanentNotesArea = document.getElementById("permanent-notes");
+    const dailyNotesArea = document.getElementById("daily-notes");
+
+    // Load existing permanent notes from localStorage
+    permanentNotesArea.value = getPermanentNotes() || "";
+
+    // Listen for changes => auto-save permanent notes
+    permanentNotesArea.addEventListener("input", () => {
+      setPermanentNotes(permanentNotesArea.value);
+    });
+
+    // For daily notes, we key by today's date
+    const todayStr = formatDate();
+    dailyNotesArea.value = getDailyNotes(todayStr) || "";
+
+    dailyNotesArea.addEventListener("input", () => {
+      setDailyNotes(todayStr, dailyNotesArea.value);
     });
   </script>
 </body>
