@@ -21,10 +21,9 @@ function setData(key, value) {
 const ROUTINES_KEY = "routines";
 const SETTINGS_KEY = "settings";
 const COMPLETIONS_KEY = "completions";
+const USAGE_KEY = "lastUsageDate"; // track last usage date for auto day off
+const PERMANENT_NOTES_KEY = "permanentNotes"; // Key for permanent notes
 
-/**
- * Initialize the app data
- */
 function initAppData() {
   let routines = getData(ROUTINES_KEY, []);
   let settings = getData(SETTINGS_KEY, {
@@ -37,10 +36,56 @@ function initAppData() {
   setData(SETTINGS_KEY, settings);
   setData(COMPLETIONS_KEY, completions);
 
+  // 1) Mark any missed days (between last usage and today) as day off
+  autoMarkMissedDaysAsOff();
+
+  // 2) Purge old day-off records from previous months
   purgeOldDayOffRecords();
 }
 
 initAppData();
+
+/****************************************************
+ * autoMarkMissedDaysAsOff()
+ * - If user hasn’t opened site for X days, mark each missed day as day off
+ ****************************************************/
+function autoMarkMissedDaysAsOff() {
+  const settings = getSettings();
+
+  // read last usage date
+  const lastUsageStr = localStorage.getItem(USAGE_KEY);
+  const todayStr = formatDate();
+  const todayDateObj = new Date(todayStr);
+
+  if (!lastUsageStr) {
+    // first-time usage => set lastUsageDate to today
+    localStorage.setItem(USAGE_KEY, todayStr);
+    return;
+  }
+
+  const lastUsageDateObj = new Date(lastUsageStr);
+  // If same day, no missed days
+  if (lastUsageDateObj.toDateString() === todayDateObj.toDateString()) {
+    localStorage.setItem(USAGE_KEY, todayStr);
+    return;
+  }
+
+  // Mark each missing day as day off
+  let tempDate = new Date(lastUsageDateObj);
+  tempDate.setDate(tempDate.getDate() + 1);
+
+  while (tempDate < todayDateObj) {
+    const checkStr = formatDate(tempDate);
+    if (!settings.dayOffRecords.includes(checkStr)) {
+      settings.dayOffRecords.push(checkStr);
+    }
+    tempDate.setDate(tempDate.getDate() + 1);
+  }
+
+  // Save and update usage date
+  setData(SETTINGS_KEY, settings);
+  localStorage.setItem(USAGE_KEY, todayStr);
+}
 
 /****************************************************
  * Date Helpers
@@ -71,43 +116,39 @@ function updateSettings(newSettings) {
 }
 
 /**
- * canTakeDayOff:
- * 1. Not already on day-off for today
- * 2. Not over the monthly dayOffLimit
+ * canTakeDayOff():
+ * - not already day off for today
+ * - not over dayOffLimit for the current month
+ *
+ * If dayOffRecords is bigger than the new limit, user can't take more day off
+ * until next month resets. No errors thrown.
  */
 function canTakeDayOff() {
   const settings = getSettings();
   const todayStr = formatDate();
-  // If today's date is in dayOffRecords, can't take day off again
   if (settings.dayOffRecords.includes(todayStr)) {
     return false;
   }
   const currentMonth = getCurrentMonth();
-  // Count how many day-offs are used in the current month
   const usedThisMonth = settings.dayOffRecords.filter(d => d.startsWith(currentMonth)).length;
   return usedThisMonth < settings.dayOffLimit;
 }
 
-/** 
- * takeDayOff:
- * - Add today's date to dayOffRecords if not already present
- */
 function takeDayOff() {
   const settings = getSettings();
   const todayStr = formatDate();
   if (settings.dayOffRecords.includes(todayStr)) {
-    return false; // Already taken
+    return false; // already day off
   }
   settings.dayOffRecords.push(todayStr);
   setData(SETTINGS_KEY, settings);
+
+  // update usage date
+  localStorage.setItem(USAGE_KEY, todayStr);
+
   return true;
 }
 
-/**
- * undoDayOff:
- * - Removes today's date from dayOffRecords if present.
- * - Allows re-taking day off the same day if undone.
- */
 function undoDayOff() {
   const settings = getSettings();
   const todayStr = formatDate();
@@ -120,10 +161,6 @@ function undoDayOff() {
   return false;
 }
 
-/** 
- * isDayOff:
- *  - Check if the date is in dayOffRecords
- */
 function isDayOff(dateStr = formatDate()) {
   const settings = getSettings();
   return settings.dayOffRecords.includes(dateStr);
@@ -170,12 +207,13 @@ function updateRoutine(routineId, updatedObj) {
   const idx = routines.findIndex(r => r.id === routineId);
   if (idx < 0) return false;
 
-  // If name changed, check duplicates
   if (
     updatedObj.name &&
     updatedObj.name.toLowerCase() !== routines[idx].name.toLowerCase()
   ) {
-    const conflict = routines.find(r => r.name.toLowerCase() === updatedObj.name.toLowerCase());
+    const conflict = routines.find(
+      r => r.name.toLowerCase() === updatedObj.name.toLowerCase()
+    );
     if (conflict) {
       alert("A routine with this name already exists!");
       return false;
@@ -198,6 +236,10 @@ function deleteRoutine(routineId) {
  ****************************************************/
 /**
  * completions[YYYY-MM-DD] = [ { routineId, habitIndex }, ... ]
+ *
+ * We preserve streak if the user hasn't completed a habit for X days, so long as
+ * all missed days were day offs. This ensures switching routines or simply not
+ * logging in doesn't break the streak for that routine.
  */
 function completeHabit(routineId, habitIndex) {
   const routines = getAllRoutines();
@@ -207,12 +249,10 @@ function completeHabit(routineId, habitIndex) {
   const habit = routine.habits[habitIndex];
   const todayStr = formatDate();
 
-  // If already completed today, do nothing
   if (habit.lastCompletedDate === todayStr) {
-    return;
+    return; // already done
   }
 
-  // Streak logic
   if (!habit.lastCompletedDate) {
     // first time
     habit.streak = 1;
@@ -224,22 +264,21 @@ function completeHabit(routineId, habitIndex) {
     if (diffDays === 1) {
       habit.streak += 1;
     } else if (diffDays > 1) {
-      // Check if all missed days were day offs
-      let allDayOff = true;
+      let allMissedAreOff = true;
       for (let i = 1; i < diffDays; i++) {
         const checkDate = new Date(lastDone);
         checkDate.setDate(lastDone.getDate() + i);
-        if (!isDayOff(formatDate(checkDate))) {
-          allDayOff = false;
+        const checkStr = formatDate(checkDate);
+        if (!isDayOff(checkStr)) {
+          allMissedAreOff = false;
           break;
         }
       }
-      habit.streak = allDayOff ? habit.streak + 1 : 1;
+      habit.streak = allMissedAreOff ? habit.streak + 1 : 1;
     }
   }
-  habit.lastCompletedDate = todayStr;
 
-  // Save updated routine
+  habit.lastCompletedDate = todayStr;
   setData(ROUTINES_KEY, routines);
 
   // Log in COMPLETIONS_KEY
@@ -256,9 +295,6 @@ function completeHabit(routineId, habitIndex) {
   setData(COMPLETIONS_KEY, completions);
 }
 
-/**
- * uncompleteHabit => remove from completions & revert streak if undone same day
- */
 function uncompleteHabit(routineId, habitIndex, sameDay = true) {
   const routines = getAllRoutines();
   const routine = routines.find(r => r.id === routineId);
@@ -267,7 +303,6 @@ function uncompleteHabit(routineId, habitIndex, sameDay = true) {
   const habit = routine.habits[habitIndex];
   const todayStr = formatDate();
 
-  // Remove from completions
   let completions = getData(COMPLETIONS_KEY, {});
   if (completions[todayStr]) {
     completions[todayStr] = completions[todayStr].filter(
@@ -276,7 +311,7 @@ function uncompleteHabit(routineId, habitIndex, sameDay = true) {
     setData(COMPLETIONS_KEY, completions);
   }
 
-  // Revert streak if undone the same day
+  // revert if undone the same day
   if (sameDay && habit.lastCompletedDate === todayStr) {
     habit.lastCompletedDate = "";
     habit.streak = Math.max(habit.streak - 1, 0);
@@ -284,9 +319,6 @@ function uncompleteHabit(routineId, habitIndex, sameDay = true) {
   }
 }
 
-/** 
- * getCompletionsByDate => returns array of { routineId, habitIndex } for the date
- */
 function getCompletionsByDate(dateStr) {
   const completions = getData(COMPLETIONS_KEY, {});
   return completions[dateStr] || [];
@@ -298,39 +330,26 @@ function getCompletionsByDate(dateStr) {
 function purgeOldDayOffRecords() {
   const settings = getSettings();
   const currentMonth = getCurrentMonth();
-  // Remove day-off records that are from older months
   settings.dayOffRecords = settings.dayOffRecords.filter(d => d.startsWith(currentMonth));
   setData(SETTINGS_KEY, settings);
 }
 
 /****************************************************
- * Notes Logic - Permanent & Daily
+ * Notes (Permanent & Daily)
  ****************************************************/
-
-/**
- * Permanent Notes => single key in localStorage
- */
-const PERMANENT_NOTES_KEY = "permanentNotes";
-
 function getPermanentNotes() {
   return getData(PERMANENT_NOTES_KEY, "");
 }
-
 function setPermanentNotes(text) {
   setData(PERMANENT_NOTES_KEY, text);
 }
 
-/**
- * Daily Notes => keyed by date, so each day is a blank slate
- */
 function getDailyNotesKey(dateStr) {
   return `dailyNotes_${dateStr}`; 
 }
-
 function getDailyNotes(dateStr) {
   return getData(getDailyNotesKey(dateStr), "");
 }
-
 function setDailyNotes(dateStr, text) {
   setData(getDailyNotesKey(dateStr), text);
 }
