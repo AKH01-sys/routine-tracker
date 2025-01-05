@@ -302,3 +302,35 @@ function purgeOldDayOffRecords() {
   settings.dayOffRecords = settings.dayOffRecords.filter(d => d.startsWith(currentMonth));
   setData(SETTINGS_KEY, settings);
 }
+
+/****************************************************
+ * Notes Logic - Permanent & Daily
+ ****************************************************/
+
+/**
+ * Permanent Notes => single key in localStorage
+ */
+const PERMANENT_NOTES_KEY = "permanentNotes";
+
+function getPermanentNotes() {
+  return getData(PERMANENT_NOTES_KEY, "");
+}
+
+function setPermanentNotes(text) {
+  setData(PERMANENT_NOTES_KEY, text);
+}
+
+/**
+ * Daily Notes => keyed by date, so each day is a blank slate
+ */
+function getDailyNotesKey(dateStr) {
+  return `dailyNotes_${dateStr}`; 
+}
+
+function getDailyNotes(dateStr) {
+  return getData(getDailyNotesKey(dateStr), "");
+}
+
+function setDailyNotes(dateStr, text) {
+  setData(getDailyNotesKey(dateStr), text);
+}
