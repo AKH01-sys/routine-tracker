@@ -41,7 +41,8 @@ label {
 input[type="text"],
 input[type="time"],
 input[type="number"],
-input[type="date"] {
+input[type="date"],
+textarea {
   padding: 0.4rem;
   margin-right: 0.5rem;
   border: 1px solid #ccc;
@@ -150,6 +151,19 @@ button {
 
 h2, h3, h4, p {
   margin: 0.5rem 0;
+}
+
+/* New Styles for Notes Text Areas */
+.notes-textarea {
+  width: 100%;
+  min-height: 100px;
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  resize: vertical; /* user can drag to resize the height */
+  margin-bottom: 1rem;
+  font-family: inherit;
+  font-size: 1rem;
 }
 
 @media (max-width: 600px) {
